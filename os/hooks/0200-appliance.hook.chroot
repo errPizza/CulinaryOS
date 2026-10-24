@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+# All identities and accounts are created by the installer / first boot, never in the image.
+for file in /etc/culinaryos/branch.json /etc/culinaryos/application.json /var/lib/culinaryos/provisioned; do
+    test ! -e "$file"
+done
+for executable in /opt/culinaryos-app/backend/MesaNexo.Api /opt/culinaryos-app/client/culinary-restaurant /opt/culinaryos-app/client/culinary-bridge; do
+    test -x "$executable"
+done
+install -d -m 0755 /opt/culinaryos-app/kiosk /usr/share/xsessions
+chmod 0755 /opt/culinaryos-app /opt/culinaryos-app/backend /opt/culinaryos-app/client /opt/culinaryos-app/kiosk
+chmod 0755 /opt/culinaryos-app/kiosk/session.sh
+# Rebuild package inventories after adding native runtime dependencies.
+systemctl enable getty@tty2.service
+systemd-analyze verify culinaryos-firstboot.service culinaryos-data.service culinaryos-backend.service
+: > /etc/machine-id
+
+sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME="CulinaryOS 0.3.0-dev - Culinary Restaurant"/; s/^CULINARYOS_VERSION=.*/CULINARYOS_VERSION="0.3.0-dev"/' /usr/lib/os-release
+printf 'CulinaryOS con Culinary Restaurant\n' > /etc/issue

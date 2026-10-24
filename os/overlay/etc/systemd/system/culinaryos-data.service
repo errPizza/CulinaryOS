@@ -1,0 +1,43 @@
+[Unit]
+Description=CulinaryOs - almacén cifrado y outbox de sucursal
+After=local-fs.target culinaryos-firstboot.service
+Before=display-manager.service
+ConditionPathExists=/etc/culinaryos/branch.json
+OnFailure=culinaryos-maintenance.service
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=notify
+NotifyAccess=main
+User=culinaryos-data
+Group=culinaryos-app
+ExecStart=/usr/bin/python3 /usr/local/lib/culinaryos/dataio.py serve
+LoadCredential=keyring:/etc/culinaryos/secrets/branch.keys.json
+StateDirectory=culinaryos-data
+StateDirectoryMode=0700
+RuntimeDirectory=culinaryos-data
+RuntimeDirectoryMode=0750
+UMask=0077
+Restart=on-failure
+RestartSec=5s
+TimeoutStartSec=45s
+TimeoutStopSec=20s
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX
+CapabilityBoundingSet=
+LimitCORE=0
+MemoryMax=256M
+TasksMax=16
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target

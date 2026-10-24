@@ -1,0 +1,5 @@
+{
+  "dns_host": "",
+  "certificates": [],
+  "backup_max_age_hours": 48
+}

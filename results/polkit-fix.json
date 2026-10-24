@@ -1,0 +1,11 @@
+{
+  "fix": "policykit-1-gnome sustituido por lxpolkit; autostart XFCE expl?cito",
+  "project_tests_passed": 10,
+  "desktop_parsed": true,
+  "profiles_checked": [
+    "terminal",
+    "sucursal"
+  ],
+  "apt_in_vm": "pendiente de reintento por el usuario",
+  "source": "https://packages.debian.org/trixie/lxpolkit"
+}

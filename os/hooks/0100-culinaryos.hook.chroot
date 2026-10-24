@@ -1,0 +1,63 @@
+#!/bin/sh
+set -eu
+export DEBIAN_FRONTEND=noninteractive
+profile=$(cat /etc/culinaryos/profile)
+printf 'es_MX.UTF-8 UTF-8\n' > /etc/locale.gen
+locale-gen
+update-locale LANG=es_MX.UTF-8
+ln -sf /usr/share/zoneinfo/America/Mexico_City /etc/localtime
+printf 'America/Mexico_City\n' > /etc/timezone
+printf 'XKBMODEL="pc105"\nXKBLAYOUT="latam"\nXKBVARIANT=""\nXKBOPTIONS=""\n' > /etc/default/keyboard
+# Mantener ID=debian para compatibilidad de herramientas de la distribución.
+cp /usr/lib/os-release /usr/lib/os-release.debian
+sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME="CulinaryOs 0.2.0-dev (Debian 13)"/; s/^NAME=.*/NAME="CulinaryOs"/' /usr/lib/os-release
+printf '\nCULINARYOS_VERSION="0.2.0-dev"\n' >> /usr/lib/os-release
+printf 'CulinaryOs 0.2.0-dev — Aplicación pendiente de integración\n' > /etc/issue
+printf 'CulinaryOs 0.2.0-dev\n' > /etc/issue.net
+getent group culinaryos-app >/dev/null || groupadd --system culinaryos-app
+id culinaryos-app >/dev/null 2>&1 || useradd --system --gid culinaryos-app --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin culinaryos-app
+id culinaryos-data >/dev/null 2>&1 || useradd --system --gid culinaryos-app --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin culinaryos-data
+passwd -l root
+install -d -m 0700 /var/lib/culinaryos /var/backups/culinaryos
+install -d -m 0755 /usr/share/culinaryos
+chmod 0600 /etc/culinaryos/backup.json
+# Comprobación nft necesita soporte netfilter del constructor; falla en vez de omitirla.
+nft --check --file /etc/nftables.conf
+systemctl enable chrony nftables NetworkManager apparmor culinaryos-firstboot.service culinaryos-health.timer culinaryos-data.service culinaryos-sync.timer
+systemctl disable culinaryos-backend.service culinaryos-publish.service
+systemctl disable avahi-daemon.service avahi-daemon.socket nut-server.service nut-monitor.service nut-driver-enumerator.path nut-driver-enumerator.service
+# NUT es local: no anunciar su puerto de loopback desde el fichero que distribuye Debian.
+rm -f /etc/avahi/services/nut.service
+systemctl disable apt-daily.timer apt-daily-upgrade.timer
+systemctl mask ssh.service ssh.socket 2>/dev/null || true
+systemctl disable smartmontools.service 2>/dev/null || true
+if [ "$profile" = terminal ] || [ "$profile" = sucursal ]; then
+    systemctl enable lightdm getty@tty2.service
+    if [ "$profile" = sucursal ]; then
+        install -d -m 0755 /etc/lightdm/lightdm.conf.d
+        printf '[Seat:*]\nautologin-user=operador\nautologin-user-timeout=0\n' > /etc/lightdm/lightdm.conf.d/60-culinaryos-autologin.conf
+        chmod 0644 /etc/lightdm/lightdm.conf.d/60-culinaryos-autologin.conf
+    fi
+else
+    rm -f /etc/systemd/system/getty@tty1.service.d/20-culinaryos-graphical.conf
+    rm -f /etc/xdg/autostart/culinaryos.desktop
+    rm -f /etc/systemd/system/display-manager.service.d/culinaryos.conf
+    systemctl set-default multi-user.target
+fi
+# Recursos copiados antes de regenerar initramfs: Plymouth solo incluye su ImageDir.
+install -d -m 0755 /usr/share/pixmaps
+install -m 0644 /usr/share/culinaryos/branding/logo.png /usr/share/plymouth/themes/culinaryos/logo.png
+install -m 0644 /usr/share/culinaryos/branding/logo.png /usr/share/pixmaps/culinaryos.png
+printf 'LOGO=culinaryos\n' >> /usr/lib/os-release
+plymouth-set-default-theme culinaryos
+update-initramfs -u -k all
+# Debian instalado usa GRUB; live-build genera su propio cargador.
+if [ -f /boot/grub/grub.cfg ] && command -v update-grub >/dev/null 2>&1; then
+    python3 /usr/local/lib/culinaryos/bootconfig.py quiet-generator
+    update-grub
+fi
+visudo -cf /etc/sudoers
+systemd-analyze verify /etc/systemd/system/culinaryos-*.service /etc/systemd/system/culinaryos-*.timer
+# Inventario exacto de todos los paquetes y textos de licencia distribuidos.
+dpkg-query -W -f='${binary:Package}\t${Version}\t${Architecture}\t${source:Package}\n' > /usr/share/culinaryos/packages.tsv
+tar -czf /usr/share/culinaryos/copyrights.tar.gz --dereference /usr/share/doc/*/copyright

@@ -1,0 +1,11 @@
+{
+  "cases_passed": 7,
+  "method": "Bash con passwd/getent simulados; sin cuentas reales",
+  "local_suite_total": 132,
+  "local_suite_passed": 131,
+  "local_suite_skipped": 1,
+  "timestamp_utc": "2026-10-15T11:11:27.6262313Z",
+  "vm_recovery_complete": false,
+  "vm_evidence": "results/LAB-VM.md",
+  "installed_vm_updated": false
+}

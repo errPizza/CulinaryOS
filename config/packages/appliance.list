@@ -1,0 +1,15 @@
+# Native client runtime, kiosk and isolated graphical build validation.
+libwebkit2gtk-4.1-0
+libayatana-appindicator3-1
+libicu76
+libssl3t64
+zlib1g
+libsecret-1-0
+gnome-keyring
+libpam-gnome-keyring
+libsecret-tools
+openbox
+x11-utils
+libxtst6
+wmctrl
+# Debian Installer selects the installed GRUB package from the boot firmware mode.

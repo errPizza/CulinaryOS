@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=CulinaryOS — Estado del equipo
+Comment=Diagnóstico local y mantenimiento del sistema
+Exec=/usr/bin/python3 /usr/local/lib/culinaryos/welcome.py
+Icon=culinaryos
+Terminal=false
+Categories=System;Monitor;
+StartupNotify=true

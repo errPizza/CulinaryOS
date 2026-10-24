@@ -1,0 +1,19 @@
+{
+  "iso": "dist/CulinaryOs-reparacion-red.iso",
+  "iso_sha256": "1fc2d553a75b09b1805a542d3a0577e84322d68a3317b9f1707ac87292d70975",
+  "files_verified": {
+    "SHA256SUMS": "989e4f79be6f0a451264cf709a3694d24146505d4e06420d811d7652c5d36b23",
+    "deployment.py": "4055ea012b7f307f054dba4d3cf0553c55edf7b413bcf3d490331b444d30f736",
+    "lab-site.json": "decf44c0dd8e0c1ac530415d092f5976f76cf791d7d71f16ebde5395d77d06c9",
+    "reparar-red.sh": "73dd3aa701ef90d7a702ba8961248c9f7f44c5fe0df5522484049b6b9bd2e23e"
+  },
+  "bootable": false,
+  "local_tests_passed": 134,
+  "local_tests_skipped": 1,
+  "bash_checks": 16,
+  "shellcheck_findings": 0,
+  "host_rejected": true,
+  "linux_repair_executed": false,
+  "user_confirmed_error": "Permission denied al abrir /root/site-lab/chrony.conf",
+  "apparmor_confirmed": false
+}

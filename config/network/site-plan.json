@@ -1,0 +1,33 @@
+{
+  "site_id": "local-01",
+  "network": "10.77.0.0/24",
+  "gateway": "10.77.0.1",
+  "server_name": "culinaryos.internal",
+  "server_node": "servidor-01",
+  "local_time": true,
+  "application_ports": [],
+  "internet_probes": [],
+  "nodes": [
+    {
+      "name": "servidor-01",
+      "role": "servidor",
+      "address": "10.77.0.10"
+    },
+    {
+      "name": "meseros-01",
+      "role": "meseros",
+      "address": "10.77.0.101"
+    },
+    {
+      "name": "cocina-01",
+      "role": "cocina",
+      "address": "10.77.0.121"
+    },
+    {
+      "name": "gerente-01",
+      "role": "gerente",
+      "address": "10.77.0.141"
+    }
+  ],
+  "mdns_name": "servidor-restaurante"
+}

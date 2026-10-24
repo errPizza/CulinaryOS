@@ -1,0 +1,9 @@
+/var/log/culinaryos/*.log {
+    weekly
+    rotate 4
+    maxsize 8M
+    compress
+    missingok
+    notifempty
+    create 0600 root root
+}

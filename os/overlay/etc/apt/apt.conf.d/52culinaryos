@@ -1,0 +1,5 @@
+APT::Periodic::Enable "0";
+Unattended-Upgrade::Automatic-Reboot "false";
+Unattended-Upgrade::Remove-Unused-Dependencies "false";
+Acquire::AllowInsecureRepositories "false";
+APT::Get::AllowUnauthenticated "false";

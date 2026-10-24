@@ -1,0 +1,11 @@
+[Unit]
+Description=CulinaryOs - diagnóstico periódico acotado
+
+[Timer]
+OnBootSec=45s
+OnUnitInactiveSec=120s
+AccuracySec=15s
+Unit=culinaryos-health.service
+
+[Install]
+WantedBy=timers.target

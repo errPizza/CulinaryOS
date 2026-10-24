@@ -1,0 +1,93 @@
+#!/bin/bash
+set -Eeuo pipefail
+umask 077
+
+valid_admin_name() {
+    [[ $1 =~ ^[a-z][a-z0-9_-]{2,30}$ && $1 != operador && $1 != root ]]
+}
+
+select_admin() {
+    local state_dir=$1
+    if [[ -f $state_dir/setup-admin ]]; then
+        IFS= read -r admin < "$state_dir/setup-admin" || return 1
+        if ! valid_admin_name "$admin"; then
+            echo 'Registro de alta no válido; solicite revisión administrativa.' >&2
+            return 1
+        fi
+        printf 'Retomando el alta de la cuenta administrativa: %s\n' "$admin"
+        return 0
+    fi
+    while true; do
+        if ! read -r -p 'Nombre de la nueva cuenta administradora (3-31 caracteres): ' admin; then
+            echo 'Entrada interrumpida; alta sin completar.' >&2
+            return 1
+        fi
+        if ! valid_admin_name "$admin"; then
+            echo 'Use 3-31 letras minúsculas, números, guion o guion bajo; empiece por una letra.'
+            continue
+        fi
+        if getent passwd "$admin" >/dev/null; then
+            echo 'La cuenta ya existe; elija un nombre nuevo. No se modificará esa cuenta.'
+            continue
+        fi
+        return 0
+    done
+}
+
+set_account_password() {
+    local account=$1 attempt
+    echo 'Al escribir la contraseña no aparecen letras, puntos ni asteriscos. Es normal.'
+    echo 'Escríbala, pulse Enter y repítala exactamente cuando se solicite.'
+    for attempt in 1 2 3; do
+        if passwd "$account"; then return 0; fi
+        printf 'No se cambió la contraseña (intento %s de 3).\n' "$attempt" >&2
+    done
+    echo 'Alta sin completar. Entre con una cuenta administradora y ejecute sudo culinaryos-firstboot.' >&2
+    return 1
+}
+
+main() {
+    [[ $EUID -eq 0 ]] || { echo 'Use sudo desde una cuenta administradora.' >&2; return 1; }
+    [[ ! -e /var/lib/culinaryos/provisioned ]] || return 0
+    [[ -t 0 && -t 1 ]] || { echo 'Se requiere una consola interactiva local.' >&2; return 1; }
+    local admin='' answer='' state_dir=/var/lib/culinaryos
+    echo 'CulinaryOs — configuración inicial'
+    if grep -qw 'boot=live' /proc/cmdline; then
+        echo 'SESIÓN LIVE: las cuentas y cambios son temporales y se pierden al reiniciar.'
+    fi
+    echo 'Use contraseñas propias; no se muestran ni se guardan en texto plano.'
+    install -d -m 0700 "$state_dir"
+    select_admin "$state_dir"
+    if [[ ! -f $state_dir/setup-admin ]]; then
+        printf '%s\n' "$admin" > "$state_dir/setup-admin.tmp"
+        mv "$state_dir/setup-admin.tmp" "$state_dir/setup-admin"
+    fi
+    if ! getent passwd "$admin" >/dev/null; then
+        useradd -m -s /bin/bash "$admin"
+    fi
+    echo 'Establezca la contraseña administrativa:'
+    set_account_password "$admin"
+    usermod -aG sudo "$admin"
+    if ! getent passwd operador >/dev/null; then
+        useradd -m -s /bin/bash -G audio,video operador
+    fi
+    if id -nG operador | tr ' ' '\n' | grep -qx sudo; then
+        echo 'La cuenta operativa tiene permisos sudo inesperados; solicite soporte.' >&2
+        return 1
+    fi
+    echo 'Establezca la contraseña de la cuenta operativa:'
+    set_account_password operador
+    echo 'Idioma inicial: español de México; teclado latinoamericano; zona America/Mexico_City.'
+    echo 'Puede cambiarlo después con sudo dpkg-reconfigure locales keyboard-configuration tzdata.'
+    read -r -p '¿Configurar la red ahora mediante nmtui? [s/N]: ' answer
+    if [[ $answer == s || $answer == S ]]; then
+        if ! nmtui; then echo 'Configuración de red cancelada; se conserva la conexión actual.'; fi
+    fi
+    passwd -l root
+    printf 'Completado %s\n' "$(date -u +%FT%TZ)" > "$state_dir/provisioned.tmp"
+    mv "$state_dir/provisioned.tmp" "$state_dir/provisioned"
+    echo 'CulinaryOs preparado. Aplicación pendiente de integración'
+    echo 'Mantenimiento: inicie sesión con su cuenta administradora y utilice sudo.'
+}
+
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then main "$@"; fi

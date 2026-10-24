@@ -1,0 +1,11 @@
+﻿{
+    "observed_date":  "2026-10-15",
+    "available_tools":  [
+                            {
+                                "Name":  "wsl.exe",
+                                "Source":  "C:\\Windows\\system32\\wsl.exe"
+                            }
+                        ],
+    "wsl_list_exit":  1,
+    "wsl_output":  "\r\n\r\n\r\nCopyright (c) Microsoft Corporation. Todos los derechos reservados.\r\n\r\n\r\n\r\n\r\n\r\n Uso: wsl.exe [Argument]\r\n\r\n\r\n\r\n\r\n\r\nArgumentos:\r\n\r\n\r\n\r\n\r\n\r\n    --install \u003cOptions\u003e\r\n\r\n\r\n        Instala el Subsistema de Windows para las caracter�sticas de Linux. Si no se especifican opciones,\r\n\r\n\r\n        las caracter�sticas recomendadas se instalar�n junto con la distribuci�n predeterminada.\r\n\r\n\r\n\r\n\r\n\r\n      Para ver la distribuci�n predeterminada, as� como una lista de otras distribuciones v�lidas,\r\n\r\n\r\nuse \u0027wsl --list --online\u0027.\r\n\r\n\r\n\r\n\r\n\r\n        Opciones: \r\n\r\n\r\n           --distribuci�n, -d [Argument]\r"
+}

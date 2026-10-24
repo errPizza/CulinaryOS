@@ -1,0 +1,10 @@
+{
+  "image": "dist\\CulinaryOs-transferencia-v2.iso",
+  "sha256": "6569c8b22dc6a66fd6b00cfc922eb1db81fd5852b8bdd801094eec52b42f06d4",
+  "files_verified": {
+    "culinaryos.zip": "87f695d5a48040d826f0ce583f3f0ca0ad29912d8d0ee9284818b41ba21c4767",
+    "culinaryos.zip.sha256": "5fb59a7e319a2b688838fa80b187ff8d925c4a5378bbb9151db6f32080a13d0f"
+  },
+  "bootable": false,
+  "fix": "Paquete corregido: lxpolkit para trixie. ISO anterior v1 conservada sin esta correccion."
+}

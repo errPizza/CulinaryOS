@@ -1,0 +1,12 @@
+{
+  "name": "CulinaryOS",
+  "version": "0.3.0-dev",
+  "distribution": "trixie",
+  "architecture": "amd64",
+  "profile": "sucursal",
+  "installer": "debian-installer-live",
+  "application_included": true,
+  "kiosk": true,
+  "firstboot": "own-accounts-and-unique-site",
+  "default_network": "local-only"
+}

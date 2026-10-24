@@ -1,0 +1,11 @@
+{
+  "validation": "chronyd -p con directivas generadas como argumentos",
+  "tests_added": 3,
+  "tests_total": 135,
+  "tests_passed": 134,
+  "tests_skipped": 1,
+  "vm_cause_confirmed": false,
+  "installed_vm_updated": false,
+  "evidence": "results/LAB-VM.md",
+  "timestamp_utc": "2026-10-15T20:12:04.5934719Z"
+}

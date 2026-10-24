@@ -1,0 +1,29 @@
+[Unit]
+Description=CulinaryOs - anuncio DNS-SD del backend disponible
+Requires=avahi-daemon.service
+BindsTo=culinaryos-backend.service
+After=avahi-daemon.service culinaryos-backend.service
+PartOf=culinaryos-backend.service
+ConditionPathExists=/etc/culinaryos/application.json
+ConditionPathExists=/etc/culinaryos/application.registered
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=culinaryos-app
+Group=culinaryos-app
+ExecStart=/usr/bin/python3 /usr/local/lib/culinaryos/apphost.py publish
+Restart=on-failure
+RestartSec=10s
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+RestrictAddressFamilies=AF_UNIX
+CapabilityBoundingSet=
+MemoryMax=96M
+TasksMax=8
+
+[Install]
+WantedBy=multi-user.target

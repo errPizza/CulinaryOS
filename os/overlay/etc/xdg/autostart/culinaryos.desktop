@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=CulinaryOs
+Comment=Estado del equipo y aplicación pendiente de integración
+Exec=/usr/bin/python3 /usr/local/lib/culinaryos/apphost.py session
+Icon=culinaryos
+Terminal=false
+OnlyShowIn=XFCE;

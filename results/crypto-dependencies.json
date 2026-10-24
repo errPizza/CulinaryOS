@@ -1,0 +1,23 @@
+﻿[
+    {
+        "package":  "PyNaCl",
+        "version":  "1.6.2",
+        "filename":  "pynacl-1.6.2-cp38-abi3-win_amd64.whl",
+        "sha256":  "62985f233210dee6548c223301b6c25440852e13d59a8b81490203c3227c5ba0",
+        "source":  "https://files.pythonhosted.org/packages/41/ad/334600e8cacc7d86587fe5f565480fde569dfb487389c8e1be56ac21d8ac/pynacl-1.6.2-cp38-abi3-win_amd64.whl"
+    },
+    {
+        "package":  "cffi",
+        "version":  "2.1.1",
+        "filename":  "cffi-2.1.1-cp313-cp313-win_amd64.whl",
+        "sha256":  "1aa5645c30469b09530c4ebca77ebf8f17618293c58f8549cb1a543a50236e7d",
+        "source":  "https://files.pythonhosted.org/packages/60/a6/8b149b2c3f2e11aaa1618ef64500b45f50f22c57a977a4dff1aff1f91042/cffi-2.1.1-cp313-cp313-win_amd64.whl"
+    },
+    {
+        "package":  "pycparser",
+        "version":  "3.11",
+        "filename":  "pycparser-3.11-py3-none-any.whl",
+        "sha256":  "51d5a8ba2be0bbe440b99d2112604c95bbbc3c2748a64260186c541e1729cd80",
+        "source":  "https://files.pythonhosted.org/packages/90/11/0e6f11117525ff0eec40ebac3d313376f102df93ca44ad9e893ee85e4f89/pycparser-3.11-py3-none-any.whl"
+    }
+]

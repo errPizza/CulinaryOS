@@ -1,0 +1,31 @@
+{
+  "timestamp_utc": "2026-10-15T21:19:49.9025551Z",
+  "iso": "dist/CulinaryOs-arranque-limpio.iso",
+  "iso_sha256": "d4f549fe72c13cd461c0f91fc58373f6644f155abe4cabb85c90198b3c24ac30",
+  "bootable": false,
+  "joliet_payloads_verified": 10,
+  "files_sha256": {
+    "20-culinaryos-graphical.conf": "6d33e00ec86a26d1f20a997768e07e4ab3b19c58d3408d2f7a06c0894ff0837a",
+    "60-culinaryos-splash.cfg": "3ac3004a30914c4d9da5a5b89b7410775f9b43ed4385fe212c2ee03041ac7ed3",
+    "SHA256SUMS": "ec1bde6761df542ef87afa0ac4c479fe1522c72cea08dd794a6724095a0270d4",
+    "activar-arranque.sh": "af2053cc64aad01ce2bcba496c7fea3bb3b0cceba80af87171f737ea8629b201",
+    "bootconfig.py": "f30f9ad28ddb91469abedac29fee01eeda1e331e3910ae9764ae456ffaa50abd",
+    "culinaryos.plymouth": "86bcc5c286c6bbaf03aafbea8eb8579eccfad8a27242d0ab940b4816fca7197c",
+    "culinaryos.script": "11b1c44c330867f7a6fe022daad47e08ac1289201ebdc1ee627d7b074e413dd6",
+    "dot.png": "e2e21f22b4bc29c0ab1a6c2e6c03d1226a90773f4368b235d6f15099938cd51e",
+    "logo.png": "e09c56b8aa840800bea6cb220f5f8f9f9f5e08f22771a65247ecb2294b585eaa",
+    "restaurar-arranque.sh": "d2655286668c99d16dc7f86650adffe8ad675e0ec438741553cad2ec25d8dac9"
+  },
+  "tests_total": 147,
+  "tests_passed": 146,
+  "tests_skipped": 1,
+  "bash_syntax_checks": 19,
+  "shellcheck_findings": 0,
+  "visual_boot_executed_by_agent": false,
+  "installed_in_user_vm": false,
+  "pending": [
+    "Arranque gráfico real en VM",
+    "Esc y diálogos de Plymouth",
+    "Transición a XFCE"
+  ]
+}

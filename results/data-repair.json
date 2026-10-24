@@ -1,0 +1,24 @@
+{
+  "iso": "dist/CulinaryOs-reparacion-datos.iso",
+  "iso_sha256": "1c64e84c2f70ee9f66d581492c3e52ca4f37c0649e29b362234f1c96438b3f2b",
+  "files_verified": {
+    "SHA256SUMS": "fe8afd62b3f2a34b7a12a19581b1c7995c6f64868c9d108ebd986fc81bf204ea",
+    "credential-check.py": "4e8cd404ee43c22c8fd19f51c7f06cfd434b72fc269a6aecb683bcf3953f9df1",
+    "culinaryos-firewall-apply": "4c649749a232095c628be30004d13b57f04847ef1bc9493c91493674fbe559da",
+    "dataio.py": "34aa71cf5ac375216eb478ff912abadc62fc46b3770a5384c2f17e2567c6845d",
+    "reparar-datos.sh": "3d6994c9953d3d738e5675303aff8b67bbff759d7863e2dce9012650bc408b15",
+    "securedata.py": "744e6772fa2b168518478dda3a9e601085a2b400292ca855aa9abdd88de2ac50"
+  },
+  "bootable": false,
+  "credential_tests_added": 9,
+  "local_tests_passed": 143,
+  "local_tests_skipped": 1,
+  "bash_checks": 17,
+  "shellcheck_findings": 0,
+  "host_rejected": true,
+  "repair_executed_in_linux": false,
+  "regenerate_keys": false,
+  "redeploy_network": false,
+  "error_confirmed": "PermissionError en validaci?n 0600 de la copia systemd",
+  "timestamp_utc": "2026-10-15T20:35:02.1832598Z"
+}

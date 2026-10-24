@@ -1,0 +1,25 @@
+[Unit]
+Description=CulinaryOs - snapshot SQLite consistente sin claves privadas
+After=culinaryos-data.service
+Requires=culinaryos-data.service
+ConditionPathExists=/etc/culinaryos/branch.json
+
+[Service]
+Type=oneshot
+User=culinaryos-data
+Group=culinaryos-app
+ExecStart=/usr/bin/python3 /usr/local/lib/culinaryos/dataio.py snapshot
+LoadCredential=keyring:/etc/culinaryos/secrets/branch.keys.json
+StateDirectory=culinaryos-data
+StateDirectoryMode=0700
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+NoNewPrivileges=yes
+RestrictAddressFamilies=AF_UNIX
+CapabilityBoundingSet=
+LimitCORE=0
+MemoryMax=256M
+TasksMax=16
+TimeoutStartSec=5min

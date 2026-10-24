@@ -1,0 +1,36 @@
+[Unit]
+Description=CulinaryOs - entrega persistente al servidor central
+After=culinaryos-data.service
+Requires=culinaryos-data.service
+ConditionPathExists=/etc/culinaryos/secrets/central-client.key
+OnFailure=culinaryos-maintenance.service
+
+[Service]
+Type=oneshot
+User=culinaryos-data
+Group=culinaryos-app
+ExecStart=/usr/bin/python3 /usr/local/lib/culinaryos/dataio.py sync
+LoadCredential=keyring:/etc/culinaryos/secrets/branch.keys.json
+LoadCredential=central-ca:/etc/culinaryos/secrets/central-ca.crt
+LoadCredential=central-cert:/etc/culinaryos/secrets/central-client.crt
+LoadCredential=central-key:/etc/culinaryos/secrets/central-client.key
+StateDirectory=culinaryos-data
+StateDirectoryMode=0700
+UMask=0077
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+LimitCORE=0
+MemoryMax=256M
+TasksMax=16
+CPUQuota=30%
+TimeoutStartSec=45s
+TimeoutStopSec=10s

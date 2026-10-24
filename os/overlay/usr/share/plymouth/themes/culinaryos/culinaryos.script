@@ -1,0 +1,79 @@
+# CulinaryOS: actividad de arranque, sin porcentaje ni espera artificial.
+Window.SetBackgroundTopColor(1, 1, 1);
+Window.SetBackgroundBottomColor(1, 1, 1);
+original = Image("logo.png");
+size = Window.GetHeight() * 0.55;
+if (size > Window.GetWidth() * 0.72) size = Window.GetWidth() * 0.72;
+if (size > 440) size = 440;
+logo = original.Scale(size, size * original.GetHeight() / original.GetWidth());
+logo_sprite = Sprite(logo);
+logo_x = Window.GetX() + Window.GetWidth() / 2 - logo.GetWidth() / 2;
+logo_y = Window.GetY() + Window.GetHeight() * 0.43 - logo.GetHeight() / 2;
+logo_sprite.SetPosition(logo_x, logo_y, 1);
+center_x = Window.GetX() + Window.GetWidth() / 2;
+spinner_y = logo_y + logo.GetHeight() + 24;
+dot = Image("dot.png");
+for (i = 0; i < 8; i++) {
+    dots[i] = Sprite(dot);
+    angle = i * 6.283185 / 8;
+    dots[i].SetPosition(center_x + Math.Sin(angle) * 15 - dot.GetWidth() / 2,
+                        spinner_y - Math.Cos(angle) * 15 - dot.GetHeight() / 2, 2);
+}
+phase = 0;
+mode = "normal";
+fun refresh() {
+    global.phase += 0.09;
+    for (i = 0; i < 8; i++) {
+        opacity = 0.18 + 0.82 * (Math.Cos(global.phase - i * 6.283185 / 8) + 1) / 2;
+        if (global.mode != "normal") opacity = 0;
+        global.dots[i].SetOpacity(opacity);
+    }
+}
+Plymouth.SetRefreshFunction(refresh);
+label_sprite = Sprite();
+entry_sprite = Sprite();
+fun set_text(sprite, text, y) {
+    image = Image.Text(text, 0.12, 0.15, 0.18);
+    max_width = Window.GetWidth() * 0.9;
+    if (image.GetWidth() > max_width)
+        image = image.Scale(max_width, image.GetHeight() * max_width / image.GetWidth());
+    sprite.SetImage(image);
+    sprite.SetPosition(global.center_x - image.GetWidth() / 2, y, 10);
+    sprite.SetOpacity(1);
+}
+fun normal() {
+    global.mode = "normal";
+    global.entry_sprite.SetOpacity(0);
+    text = "Iniciando CulinaryOS";
+    if (Plymouth.GetMode() == "shutdown") text = "Apagando CulinaryOS";
+    if (Plymouth.GetMode() == "reboot") text = "Reiniciando CulinaryOS";
+    set_text(global.label_sprite, text, global.spinner_y + 32);
+}
+fun password(prompt, bullets) {
+    global.mode = "password";
+    set_text(global.label_sprite, prompt, global.spinner_y + 16);
+    stars = "";
+    for (i = 0; i < bullets && i < 32; i++) stars += "*";
+    if (bullets > 32) stars += "...";
+    set_text(global.entry_sprite, stars, global.spinner_y + 40);
+}
+fun question(prompt, entry) {
+    global.mode = "question";
+    set_text(global.label_sprite, prompt, global.spinner_y + 16);
+    set_text(global.entry_sprite, entry, global.spinner_y + 40);
+}
+fun message(text) {
+    if (global.mode == "normal")
+        set_text(global.label_sprite, text, global.spinner_y + 32);
+}
+fun hide_message(text) {
+    if (global.mode == "normal") normal();
+}
+Plymouth.SetDisplayNormalFunction(normal);
+Plymouth.SetDisplayPasswordFunction(password);
+Plymouth.SetDisplayQuestionFunction(question);
+Plymouth.SetDisplayMessageFunction(message);
+Plymouth.SetHideMessageFunction(hide_message);
+hint = Sprite();
+set_text(hint, "Esc: ver mensajes del arranque", Window.GetY() + Window.GetHeight() - 30);
+normal();

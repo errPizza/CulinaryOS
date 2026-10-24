@@ -1,0 +1,17 @@
+#!/bin/bash
+set -Eeuo pipefail
+[[ $EUID -eq 0 ]] || exit 1
+exec 9>/run/lock/culinaryos-update.lock
+flock -n 9 || { echo 'Ya hay mantenimiento de paquetes en curso.'; exit 1; }
+echo 'Ventana manual: cierre el uso operativo y verifique una copia de configuración.'
+read -r -p 'Escriba MANTENIMIENTO para continuar: ' answer
+[[ $answer == MANTENIMIENTO ]] || exit 2
+apt-get update
+apt-get -s upgrade
+echo 'Revise la simulación; apt volverá a pedir confirmación antes de instalar.'
+read -r -p 'Escriba INSTALAR para aplicar las actualizaciones: ' answer
+[[ $answer == INSTALAR ]] || exit 2
+# needrestart sólo informa; no reinicia servicios ni el sistema durante la ventana.
+NEEDRESTART_MODE=l apt-get upgrade
+echo 'No se reiniciará automáticamente. Revise needrestart y programe reinicio si procede.'
+needrestart -b -r l

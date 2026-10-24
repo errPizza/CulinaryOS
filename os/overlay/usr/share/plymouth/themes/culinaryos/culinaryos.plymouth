@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=CulinaryOs
+Description=Logo e indicador animado de actividad; Esc muestra mensajes.
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/culinaryos
+ScriptFile=/usr/share/plymouth/themes/culinaryos/culinaryos.script

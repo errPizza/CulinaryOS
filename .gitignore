@@ -1,0 +1,12 @@
+build/
+dist/
+tools/python/
+__pycache__/
+*.pyc
+results/local-*.json
+
+site-secrets/
+*.key
+*.csr
+*.p12
+tools/shellcheck/

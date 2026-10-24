@@ -1,0 +1,22 @@
+#!/bin/bash
+set -Eeuo pipefail
+[[ $EUID -eq 0 ]] || { echo 'Requiere sudo.'; exit 1; }
+umask 077
+out="/var/lib/culinaryos/benchmark-$(date -u +%Y%m%dT%H%M%SZ).txt"
+{
+  echo 'CulinaryOs — mediciones reales; ejecutar en reposo y repetir con cada perfil'
+  date -u --iso-8601=seconds
+  systemd-detect-virt || true
+  uname -a
+  lscpu
+  free -b
+  lsblk -o NAME,SIZE,TYPE,FSTYPE,ROTA
+  systemd-analyze time
+  systemd-analyze critical-chain
+  df -B1 /
+  echo 'CPU y memoria durante 10 segundos (omitir primera fila acumulada desde arranque):'
+  vmstat 1 11
+  echo 'Coste real del diagnóstico:'
+  /usr/bin/time -v python3 /usr/local/lib/culinaryos/health.py
+} > "$out" 2>&1
+echo "$out"

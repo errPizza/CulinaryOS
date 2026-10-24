@@ -1,0 +1,26 @@
+[Unit]
+Description=CulinaryOs - recifrado administrativo del almacén
+After=local-fs.target
+ConditionPathExists=/etc/culinaryos/branch.json
+Conflicts=culinaryos-data.service culinaryos-sync.service culinaryos-backend.service
+OnFailure=culinaryos-maintenance.service
+
+[Service]
+Type=oneshot
+User=culinaryos-data
+Group=culinaryos-app
+ExecStart=/usr/bin/python3 /usr/local/lib/culinaryos/dataio.py rotate
+LoadCredential=keyring:/etc/culinaryos/secrets/branch.keys.json
+StateDirectory=culinaryos-data
+StateDirectoryMode=0700
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+NoNewPrivileges=yes
+RestrictAddressFamilies=AF_UNIX
+CapabilityBoundingSet=
+LimitCORE=0
+MemoryMax=512M
+TasksMax=16
+TimeoutStartSec=15min

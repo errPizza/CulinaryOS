@@ -1,0 +1,11 @@
+[Unit]
+Description=CulinaryOs - reintento de sincronización independiente de la UI
+
+[Timer]
+OnBootSec=30s
+OnUnitInactiveSec=30s
+AccuracySec=5s
+Unit=culinaryos-sync.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,54 @@
+#!/bin/bash
+set -Eeuo pipefail
+umask 077
+[[ $EUID -eq 0 && $# -eq 1 ]] || { echo 'Uso: sudo culinaryos-firewall-apply ARCHIVO'; exit 2; }
+[[ -t 0 ]] || { echo 'Aplicar exclusivamente desde consola local interactiva.'; exit 2; }
+exec 9>/run/lock/culinaryos-firewall.lock
+flock -n 9 || exit 1
+candidate=$(realpath -- "$1")
+[[ -f $candidate && ! -L $1 ]] || exit 2
+work=$(mktemp -d /run/culinaryos-firewall.XXXXXX)
+committed=0
+job=""
+cleanup() {
+    code=$?
+    trap - EXIT INT TERM HUP
+    if [[ $committed -eq 0 && -e $work/armed ]]; then
+        if ! bash "$work/rollback.sh" "$work"; then
+            echo "Fallo de recuperación: conserve $work y use consola local." >&2
+            exit 1
+        fi
+    fi
+    if [[ -n $job ]]; then systemctl stop "$job.timer" || true; fi
+    rm -f "$work/new.nft" "$work/previous.nft" "$work/previous.conf" "$work/rollback.sh" "$work/armed"
+    rmdir "$work"
+    exit "$code"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM HUP
+install -m 0600 "$candidate" "$work/new.nft"
+nft --check --file "$work/new.nft"
+{ echo 'flush ruleset'; nft list ruleset; } > "$work/previous.nft"
+cp /etc/nftables.conf "$work/previous.conf"
+cat > "$work/rollback.sh" <<'ROLLBACK'
+#!/bin/bash
+set -eu
+work=$1
+/usr/sbin/nft --file "$work/previous.nft"
+install -m 0644 "$work/previous.conf" /etc/nftables.conf
+ROLLBACK
+chmod 0700 "$work/rollback.sh"
+job="culinaryos-fw-rollback-$(date +%s)-$$"
+systemd-run --unit="$job" --on-active=90s /bin/bash "$work/rollback.sh" "$work"
+touch "$work/armed"
+nft --file "$work/new.nft"
+echo 'Compruebe la red. Sin confirmación en 60 segundos se restauran las reglas anteriores.'
+if read -r -t 60 -p 'Escriba CONSERVAR: ' confirm && [[ $confirm == CONSERVAR ]]; then
+    install -m 0644 "$work/new.nft" /etc/nftables.conf
+    systemctl stop "$job.timer"
+    job=""
+    committed=1
+else
+    exit 1
+fi

@@ -1,0 +1,23 @@
+[Unit]
+Description=CulinaryOs - configuración inicial en consola local
+After=live-config.service NetworkManager.service local-fs.target systemd-user-sessions.service plymouth-quit.service
+After=console-setup.service keyboard-setup.service
+Before=getty@tty1.service display-manager.service
+Wants=plymouth-quit.service console-setup.service
+ConditionPathExists=!/var/lib/culinaryos/provisioned
+OnFailure=culinaryos-maintenance.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/culinaryos-firstboot
+StandardInput=tty-force
+StandardOutput=tty
+StandardError=tty
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+RemainAfterExit=yes
+TimeoutStartSec=infinity
+
+[Install]
+WantedBy=multi-user.target

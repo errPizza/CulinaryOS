@@ -1,0 +1,17 @@
+{
+  "name": "CulinaryOs",
+  "version": "0.2.0-dev",
+  "distribution": "trixie",
+  "architecture": "amd64",
+  "profiles": [
+    "terminal",
+    "servidor",
+    "sucursal"
+  ],
+  "locale": "es_MX.UTF-8",
+  "timezone": "America/Mexico_City",
+  "keyboard": "latam",
+  "installer": "none",
+  "release_status": "development-unvalidated",
+  "application_included": false
+}

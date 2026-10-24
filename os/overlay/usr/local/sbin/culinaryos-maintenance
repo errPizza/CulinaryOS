@@ -1,0 +1,18 @@
+#!/bin/bash
+set -Eeuo pipefail
+[[ $EUID -eq 0 ]] || { echo 'Use sudo desde la cuenta administradora.'; exit 1; }
+echo 'CulinaryOs — mantenimiento administrativo'
+echo '1) Diagnóstico  2) Servicios fallidos  3) Registro de arranque  4) Red'
+echo '5) Actualizaciones (ventana manual)  6) Respaldar configuración  7) Cerrar aviso  0) Salir'
+read -r -p 'Opción: ' option
+case "$option" in
+  1) python3 /usr/local/lib/culinaryos/health.py; cat /run/culinaryos/status.json ;;
+  2) systemctl --failed --no-pager ;;
+  3) journalctl -b --no-pager -n 200 ;;
+  4) nmtui ;;
+  5) /usr/local/sbin/culinaryos-update ;;
+  6) python3 /usr/local/lib/culinaryos/backup.py ;;
+  7) echo 'El aviso reaparecerá si persiste el fallo.'; rm -f /run/culinaryos-maintenance-required ;;
+  0) exit 0 ;;
+  *) exit 2 ;;
+esac

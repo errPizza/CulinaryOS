@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=PolicyKit
+Exec=/usr/bin/lxpolkit
+OnlyShowIn=XFCE;
+Terminal=false
+NoDisplay=true

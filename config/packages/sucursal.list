@@ -1,0 +1,17 @@
+# Interfaz local y servicios de sucursal comparten la misma base.
+xserver-xorg
+xinit
+xfce4-session
+xfwm4
+xfce4-panel
+xfdesktop4
+xfce4-settings
+xfce4-terminal
+thunar
+lightdm
+lightdm-gtk-greeter
+python3-tk
+fonts-dejavu-core
+dbus-x11
+lxpolkit
+librsvg2-common

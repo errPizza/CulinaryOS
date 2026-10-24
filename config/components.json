@@ -1,0 +1,91 @@
+{
+  "kind": "planned-components-not-installed-sbom",
+  "exact_inventory": "Produced during build: packages.tsv and copyrights.tar.gz",
+  "components": [
+    {
+      "name": "Linux Debian",
+      "role": "kernel",
+      "license_family": "GPL-2.0 and per-file exceptions"
+    },
+    {
+      "name": "Debian base",
+      "role": "sistema mínimo",
+      "license_family": "GPL/LGPL/BSD por paquete"
+    },
+    {
+      "name": "systemd",
+      "role": "servicios y journal",
+      "license_family": "LGPL-2.1-or-later y por archivo"
+    },
+    {
+      "name": "APT",
+      "role": "paquetes firmados",
+      "license_family": "GPL por componente"
+    },
+    {
+      "name": "nftables",
+      "role": "firewall",
+      "license_family": "GPL-2.0"
+    },
+    {
+      "name": "AppArmor",
+      "role": "confinamiento candidato",
+      "license_family": "GPL/LGPL por componente"
+    },
+    {
+      "name": "NetworkManager",
+      "role": "red",
+      "license_family": "GPL/LGPL por componente"
+    },
+    {
+      "name": "Python",
+      "role": "diagnóstico, copia y panel",
+      "license_family": "PSF y avisos incluidos"
+    },
+    {
+      "name": "Tk/Xorg/XFCE/LightDM",
+      "role": "Terminal",
+      "license_family": "BSD/MIT/GPL/LGPL por paquete"
+    },
+    {
+      "name": "Plymouth",
+      "role": "arranque",
+      "license_family": "GPL/LGPL por componente"
+    },
+    {
+      "name": "live-build/live-boot/live-config",
+      "role": "construcción Live",
+      "license_family": "GPL por paquete"
+    },
+    {
+      "name": "GRUB/shim",
+      "role": "UEFI firmado Debian",
+      "license_family": "GPL/BSD por componente"
+    },
+    {
+      "name": "chrony",
+      "role": "hora local sin dependencia WAN",
+      "license_family": "GPL-2.0; verificar copyright exacto"
+    },
+    {
+      "name": "SQLite",
+      "role": "almacén local WAL/FULL y outbox",
+      "license_family": "Public domain; verificar avisos Python/SQLite"
+    },
+    {
+      "name": "PyNaCl/libsodium",
+      "role": "XChaCha20-Poly1305 y Argon2id",
+      "license_family": "Apache-2.0 / ISC; revisar paquete Debian"
+    },
+    {
+      "name": "Avahi",
+      "role": "mDNS/DNS-SD limitado a LAN",
+      "license_family": "LGPL; revisar componentes"
+    },
+    {
+      "name": "Network UPS Tools",
+      "role": "driver USB y monitor de apagado optativo",
+      "license_family": "GPL por componente"
+    }
+  ]
+}

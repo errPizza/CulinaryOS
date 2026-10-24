@@ -1,0 +1,12 @@
+[Unit]
+Description=CulinaryOs - aviso de mantenimiento sin abrir consola root
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/touch /run/culinaryos-maintenance-required
+ExecStart=/usr/bin/logger -p daemon.err CulinaryOs requiere revisión administrativa local; use una cuenta administradora.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/run

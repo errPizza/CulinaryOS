@@ -1,0 +1,10 @@
+{
+  "image": "dist\\CulinaryOs-transferencia.iso",
+  "sha256": "7b06faaf6650d4c03cb4e3f38538822f86e3eebd7e589fe24bb5c4b9e146743f",
+  "files_verified": {
+    "culinaryos.zip": "4156522aad79b1bc404e044036e648a797cd91c59a50e28cd3cb64b982a2dc6e",
+    "culinaryos.zip.sha256": "b0ccabbbd10a884442206e76008fab31b9ee4e234937b9ac5e8bcad058421c59"
+  },
+  "bootable": false,
+  "purpose": "CD de datos para transferir fuentes a Debian; no es instalador del SO."
+}
