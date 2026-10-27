@@ -13,3 +13,5 @@ x11-utils
 libxtst6
 wmctrl
 # Debian Installer selects the installed GRUB package from the boot firmware mode.
+# Branch data store of Culinary Restaurant (Debian 13 ships PostgreSQL 17).
+postgresql
