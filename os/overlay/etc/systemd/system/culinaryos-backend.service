@@ -1,7 +1,7 @@
 [Unit]
 Description=CulinaryOs - backend real de la aplicación registrada
-Requires=culinaryos-data.service nftables.service
-After=culinaryos-data.service nftables.service
+Requires=postgresql.service nftables.service
+After=postgresql.service nftables.service
 Before=display-manager.service
 ConditionPathExists=/etc/culinaryos/application.json
 ConditionPathExists=/etc/culinaryos/application.server

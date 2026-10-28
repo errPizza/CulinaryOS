@@ -23,7 +23,7 @@ install -d -m 0755 /usr/share/culinaryos
 chmod 0600 /etc/culinaryos/backup.json
 # Comprobación nft necesita soporte netfilter del constructor; falla en vez de omitirla.
 nft --check --file /etc/nftables.conf
-systemctl enable chrony nftables NetworkManager apparmor culinaryos-firstboot.service culinaryos-health.timer culinaryos-data.service culinaryos-sync.timer
+systemctl enable chrony nftables NetworkManager apparmor culinaryos-firstboot.service culinaryos-health.timer culinaryos-data.service culinaryos-sync.timer postgresql.service
 systemctl disable culinaryos-backend.service culinaryos-publish.service
 systemctl disable avahi-daemon.service avahi-daemon.socket nut-server.service nut-monitor.service nut-driver-enumerator.path nut-driver-enumerator.service
 # NUT es local: no anunciar su puerto de loopback desde el fichero que distribuye Debian.

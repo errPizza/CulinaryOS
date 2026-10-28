@@ -1,16 +1,16 @@
 [Unit]
-Description=CulinaryOs - snapshot SQLite consistente sin claves privadas
-After=culinaryos-data.service
-Requires=culinaryos-data.service
+Description=CulinaryOs - snapshot de la base de la sucursal (pg_dump; los datos siguen sellados con el anillo)
+After=postgresql.service
+Requires=postgresql.service
 ConditionPathExists=/etc/culinaryos/branch.json
 
 [Service]
 Type=oneshot
-User=culinaryos-data
+User=culinaryos-app
 Group=culinaryos-app
-ExecStart=/usr/bin/python3 /usr/local/lib/culinaryos/dataio.py snapshot
-LoadCredential=keyring:/etc/culinaryos/secrets/branch.keys.json
-StateDirectory=culinaryos-data
+UMask=0077
+ExecStart=/bin/sh -c 'f=/var/lib/culinaryos-app/snapshots/$(date -u +%%Y%%m%%dT%%H%%M%%SZ).dump; mkdir -p /var/lib/culinaryos-app/snapshots && /usr/bin/pg_dump --format=custom --file="$f" culinaryos && sha256sum "$f" > "$f.sha256" && sync'
+StateDirectory=culinaryos-app
 StateDirectoryMode=0700
 ProtectSystem=strict
 ProtectHome=yes
