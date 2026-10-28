@@ -1,0 +1,13 @@
+// The kiosk account may power off, restart or suspend the appliance from Culinary
+// Restaurant, also while an administrator session stays open on another TTY.
+// Only the active local session qualifies; everything else keeps logind's defaults.
+polkit.addRule(function(action, subject) {
+    var power = [
+        "org.freedesktop.login1.power-off", "org.freedesktop.login1.power-off-multiple-sessions",
+        "org.freedesktop.login1.reboot", "org.freedesktop.login1.reboot-multiple-sessions",
+        "org.freedesktop.login1.suspend", "org.freedesktop.login1.suspend-multiple-sessions"
+    ];
+    if (subject.user == "operador" && subject.local && subject.active && power.indexOf(action.id) >= 0) {
+        return polkit.Result.YES;
+    }
+});
