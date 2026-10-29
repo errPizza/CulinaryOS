@@ -61,11 +61,19 @@ class NetworkTests(unittest.TestCase):
         files=site.render(p,"meseros-01","enp1s0")
         self.assertIn("never-default=true",files["connection.nmconnection"])
         self.assertEqual(json.loads(files["site.json"])["server_address"],"10.77.0.10")
-    def test_chrony_only_local_sources(self):
-        for name in ("servidor-01","meseros-01"):
-            conf=site.render(plan(),name,"enp1s0")["chrony.conf"]
+    def test_chrony_internet_time_is_authenticated(self):
+        server=site.render(plan(),"servidor-01","enp1s0")["chrony.conf"]
+        self.assertIn("server time.cloudflare.com iburst nts",server)
+        self.assertIn("local stratum 10",server)
+        self.assertIn("makestep 1.0 -1",server)
+        terminal=site.render(plan(),"meseros-01","enp1s0")["chrony.conf"]
+        self.assertIn("server 10.77.0.10 iburst",terminal)
+        self.assertNotIn("nts",terminal)
+        for conf in (server,terminal,(ROOT/"os/overlay/etc/chrony/chrony.conf").read_text(encoding="utf-8")):
             self.assertNotIn("pool ",conf)
             self.assertNotIn("debian.org",conf)
+        for line in server.splitlines():
+            if line.startswith("server "):self.assertTrue(line.endswith(" nts"))
     def test_internet_down_server_reachable(self):
         r=row(evidence(internet_configured=True,internet=False),"INTERNET")
         self.assertEqual(r["gravedad"],"aviso")
