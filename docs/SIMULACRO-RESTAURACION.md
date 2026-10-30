@@ -47,7 +47,7 @@ La copia queda en `/var/lib/culinaryos-app/snapshots`. Hoy no hay temporizador n
    sudo culinaryos-restore --kit /media/custodia/sucursal.kit --dump /media/custodia/AAAAMMDDTHHMMSSZ.dump
    ```
 
-4. En CulinaryAdmin, **Restablecer activación** de la licencia de la sucursal. Si el equipo anterior sigue encendido, apágalo antes. El panel entrega un código de activación nuevo.
+4. En CulinaryAdmin, **Liberar equipo** en la licencia de la sucursal, con el motivo. Si el equipo anterior sigue encendido, se bloquea en su siguiente contacto. El panel entrega un código de activación nuevo.
 5. Activar la licencia en el equipo nuevo con ese código. Hasta entonces la app muestra la pantalla de activación. La transferencia con aprobación y auditoría propias es el hallazgo 7.
 6. Si el sitio no es `local_only`, reaplicar la red y el firewall del plan de sitio. El comando sólo actualiza `/etc/hosts`.
 
@@ -73,7 +73,7 @@ Se hace en una VM nueva, con una copia realista, y se guarda la evidencia en `Me
 |---|---|---|---|
 | Instalar la ISO y completar el primer arranque | | | |
 | `culinaryos-restore` | | | |
-| Restablecer y activar la licencia | | | |
+| Liberar y activar la licencia | | | |
 | Primera venta de prueba | | | |
 | **Tiempo total (objetivo: menos de 4 horas)** | | | |
 
