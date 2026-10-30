@@ -36,6 +36,10 @@ with tempfile.TemporaryDirectory(prefix='culinary-iso-audit-',dir=iso.parent) as
     for forbidden in ('etc/culinaryos/site.json','etc/culinaryos/branch.json','etc/culinaryos/application.json','etc/culinaryos/secrets/branch.keys.json','var/lib/culinaryos-data/store.sqlite','var/lib/culinaryos/provisioned','root/qa-secret.json','usr/local/lib/culinaryos/qa-firstboot.py'):
         if 'squashfs-root/'+forbidden+'\n' in listing:raise ValueError('Operational/test state in ISO: '+forbidden)
     def cat(name):return call('unsquashfs','-cat',sq,name)
+    if 'squashfs-root/usr/local/lib/culinaryos/mesanexo_ipc.py\n' in listing or b'mesanexo_ipc' in cat('usr/local/lib/culinaryos/dataio.py'):raise ValueError('SQLite extension in ISO')
+    detailed=call('unsquashfs','-lls',sq).decode()
+    for unit in ('culinaryos-sync.timer','culinaryos-sync.service'):
+        if '/etc/systemd/system/'+unit+' -> /dev/null\n' not in detailed:raise ValueError('Second outbox sender in ISO: '+unit)
     if cat('etc/machine-id').strip():raise ValueError('Machine identity was not reset')
     passwd=cat('etc/passwd').decode()
     if any(int(row.split(':')[2])>=1000 and row.split(':')[0]!='nobody' for row in passwd.splitlines()):raise ValueError('Personal account present in ISO')
@@ -53,6 +57,6 @@ with tempfile.TemporaryDirectory(prefix='culinary-iso-audit-',dir=iso.parent) as
     if 'Left Middle Right' not in mouse or 'name="Focus"' not in mouse:raise ValueError('Missing mouse focus fix')
     config=json.loads(cat('etc/culinaryos/build.json'))
     if config.get('application_included') is not True or config.get('kiosk') is not True:raise ValueError('Not integrated kiosk image')
-    report.update({'noPersonalAccounts':True,'noOperationalKeysOrData':True,'noAutomaticDiskErasure':True,'compiledExecutables':hashes,'kiosk':True,'installerPreseed':True})
+    report.update({'noPersonalAccounts':True,'noOperationalKeysOrData':True,'noAutomaticDiskErasure':True,'compiledExecutables':hashes,'kiosk':True,'installerPreseed':True,'singleOutboxSender':True})
 args.report.write_text(json.dumps(report,indent=2)+'\n')
 print(json.dumps(report,indent=2))

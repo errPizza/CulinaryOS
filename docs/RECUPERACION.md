@@ -43,6 +43,6 @@ Consultar journal persistente del disco; Live sin persistencia puede haber perdi
 
 ## Pérdida total
 
-Las copias actuales requieren reinstalar un SO validado, reponer configuraciones revisadas y crear credenciales propias. Una restauración completa requiere imagen de disco u otra estrategia, copias fuera del equipo y ensayo sobre un segundo disco virtual. Pendiente.
+La imagen integrada se restaura en un equipo recién instalado con `culinaryos-recovery-kit` y `culinaryos-restore`. Ver SIMULACRO-RESTAURACION.md; el simulacro en VM sigue pendiente. Fuera de esa imagen, las copias requieren reinstalar un SO validado, reponer configuraciones revisadas y crear credenciales propias.
 
 Para LUKS, conservar clave de recuperación y copia de encabezado offline en destinos protegidos distintos. Si se pierden todas las claves, los datos no se pueden recuperar.

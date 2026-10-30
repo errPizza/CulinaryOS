@@ -3,8 +3,9 @@ from pathlib import Path
 import argparse,hashlib,json,shutil,tarfile
 ROOT=Path(__file__).resolve().parents[1]
 APP=ROOT.parent/'MesaNexoNativo'
-parser=argparse.ArgumentParser();parser.add_argument('--revision',type=int,required=True);args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--revision',type=int,required=True);parser.add_argument('--license-server',required=True);args=parser.parse_args()
 if not 1<=args.revision<=99:raise SystemExit('Invalid revision')
+if not args.license_server.startswith('https://'):raise SystemExit('--license-server must be HTTPS')
 stage=ROOT/f'build/appliance-input-r{args.revision}'
 archive=ROOT/f'build/appliance-input-r{args.revision}.tar.gz'
 if stage.exists() or archive.exists():raise SystemExit('Do not overwrite a staged input')
@@ -34,7 +35,7 @@ for folder in ('backend','bridge'):
         if path.is_file() and path.suffix!='.pdb':copy(path,Path('application/payload')/folder/path.name)
 copy(APP/'artifacts/culinaryos-linux/rustup-init','application/toolchain/rustup-init')
 tree(APP/'deploy/culinaryos','application/deploy/culinaryos')
-copy(APP/'runtime/mesanexo_ipc.py','application/runtime/mesanexo_ipc.py')
+(stage/'application/deploy/culinaryos/license-server.txt').write_text(args.license_server.rstrip('/')+'\n',encoding='ascii',newline='\n')
 copy(APP/'branding/icons/icon-256.png','application/branding/icon-256.png')
 for path in (stage/'application/payload/backend/MesaNexo.Api',stage/'application/payload/bridge/culinary-bridge'):
     assert path.read_bytes()[:4]==b'\x7fELF'

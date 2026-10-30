@@ -6,7 +6,7 @@ Implementación de infraestructura, sin aplicación del restaurante. El almacena
 
 - culinaryos-firstboot: cuentas propias en la consola.
 - culinaryos-data: SQLite local con transacciones y outbox, atendido por un usuario de servicio mediante socket Unix.
-- culinaryos-sync.timer/service: entrega independiente al central cuando se configure.
+- culinaryos-sync.timer/service: entrega independiente al central cuando se configure. La imagen integrada lo enmascara y no incluye `mesanexo_ipc.py`: su outbox está en PostgreSQL y el backend es el único remitente. Ahí `culinaryos-data` sólo responde `health`. `culinaryos-runtime central` declara `central-ca`, `central-cert` y `central-key` en el drop-in `central.conf` del backend y lo reinicia; sin esos archivos no se declara ninguna credencial central.
 - culinaryos-backend: ejecutable REAL registrado, después del almacén y nftables; Type=notify sólo tras comprobar readiness.
 - LightDM/escritorio: después del alta y del intento de iniciar los servicios anteriores.
 - apphost session: inicia la UI nativa registrada; mientras no exista, abre la bienvenida.
