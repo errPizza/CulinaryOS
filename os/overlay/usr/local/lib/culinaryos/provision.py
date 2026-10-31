@@ -29,6 +29,19 @@ def atomic(path,value,mode=0o600):
     try:os.fsync(fd)
     finally:os.close(fd)
 
+def sync_timer(*action):
+    # La imagen integrada lo enmascara: su outbox está en PostgreSQL y el backend es el único remitente.
+    state=subprocess.run(["systemctl","is-enabled","culinaryos-sync.timer"],capture_output=True,text=True).stdout.strip()
+    if state!="masked":subprocess.run(["systemctl",*action,"culinaryos-sync.timer"],check=True)
+
+def central_credentials():
+    # LoadCredential impide arrancar si falta el archivo: una sucursal sin central no declara ninguno.
+    from deployment import write_file
+    files={"central-ca":"central-ca.crt","central-cert":"central-client.crt","central-key":"central-client.key"}
+    if all((SECRETS/name).is_file() for name in files.values()):
+        lines="".join("LoadCredential="+key+":"+str(SECRETS/name)+"\n" for key,name in files.items())
+        write_file(Path("/etc/systemd/system/culinaryos-backend.service.d/central.conf"),("[Service]\n"+lines).encode())
+
 def initialize(site_file,autologin=False):
     admin()
     site=json.loads(secure_file(site_file).read_text())
@@ -58,7 +71,8 @@ def initialize(site_file,autologin=False):
         else:
             with open(file,"x") as f:f.write(expected)
         os.chmod(file,0o644)
-    subprocess.run(["systemctl","enable","--now","culinaryos-data.service","culinaryos-sync.timer"],check=True)
+    subprocess.run(["systemctl","enable","--now","culinaryos-data.service"],check=True)
+    sync_timer("enable","--now")
     configured=json.loads(branch.read_text()).get("central")
     print("Almacén aprovisionado; sincronización con el central configurado habilitada." if configured else "Almacén aprovisionado. Central sin configurar; no se envían datos.")
 
@@ -92,6 +106,7 @@ def register(source):
         write_file("/etc/culinaryos/application.server",b"1\n")
         text="[Unit]\n"+("" if local_only else "Wants=culinaryos-publish.service\n")+"[Service]\n"+"".join("LoadCredential="+key+":"+value+"\n" for key,value in cfg.get("credentials",{}).items())
         write_file(dropin,text.encode())
+        central_credentials()
         subprocess.run(["systemctl","daemon-reload"],check=True)
         subprocess.run(["systemctl","start","culinaryos-backend.service"],check=True)
         from lan import tls
@@ -143,7 +158,10 @@ def configure_central(source):
             write_file(target,Path(cfg[key]).read_bytes(),0o600)
             stored[key]=str(target)
         value["central"]=stored;atomic(branch,value,0o644)
-    finally:subprocess.run(["systemctl","start","culinaryos-sync.timer"],check=True)
+        central_credentials()
+        subprocess.run(["systemctl","daemon-reload"],check=True)
+        subprocess.run(["systemctl","try-restart","culinaryos-backend.service"],check=True)
+    finally:sync_timer("start")
     print("Central configurado; eventos persistidos se enviarán por mTLS.")
 
 def key_backup(output,restore=False,site_id=None):
@@ -176,7 +194,8 @@ def rotate():
     try:
         subprocess.run(["systemctl","start","culinaryos-rekey.service"],check=True)
     finally:
-        subprocess.run(["systemctl","start","culinaryos-data.service","culinaryos-sync.timer"],check=True)
+        subprocess.run(["systemctl","start","culinaryos-data.service"],check=True)
+        sync_timer("start")
         if Path("/etc/culinaryos/application.json").exists():
             subprocess.run(["systemctl","start","culinaryos-backend.service","culinaryos-publish.service"],check=True)
 

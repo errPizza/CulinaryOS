@@ -12,6 +12,10 @@ chmod 0755 /opt/culinaryos-app /opt/culinaryos-app/backend /opt/culinaryos-app/c
 chmod 0755 /opt/culinaryos-app/kiosk/session.sh
 # Rebuild package inventories after adding native runtime dependencies.
 systemctl enable getty@tty2.service
+# The branch outbox lives in PostgreSQL and the backend is its only sender. Masking needs the unit files gone.
+systemctl disable culinaryos-sync.timer
+rm -f /etc/systemd/system/culinaryos-sync.timer /etc/systemd/system/culinaryos-sync.service
+systemctl mask culinaryos-sync.timer culinaryos-sync.service
 systemd-analyze verify culinaryos-firstboot.service culinaryos-data.service culinaryos-backend.service
 : > /etc/machine-id
 

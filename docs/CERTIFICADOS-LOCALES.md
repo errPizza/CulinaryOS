@@ -4,6 +4,25 @@
 
 Mecanismo OpenSSL disponible con culinaryos-pki dentro del SO, o ejecutando python3 os/overlay/usr/local/lib/culinaryos/pki.py desde las fuentes. No hay ACME, portal web de CA ni aplicación. Ninguna clave se genera durante el build.
 
+## Certificado del restaurante
+
+El instalador crea en el servidor una CA de 10 años (`restaurant-ca.crt`, con su llave en `secrets/`) y un certificado de 365 días (`restaurant-tls.crt`). `culinaryos-renew-tls.timer` corre a diario a las 04:00. A menos de 35 días del vencimiento, `renew-tls.py` emite otro certificado con la misma llave de servidor, lo verifica contra la CA, lo reemplaza de forma atómica y reinicia el backend. Si el equipo estaba apagado a esa hora, corre al arrancar.
+
+Las terminales confían en la CA, así que no se tocan. Si la renovación falla, la unidad queda como fallida en el journal y la app avisa al gerente desde 30 días antes, en rojo a 7 días y para todo el equipo en ese tramo.
+
+Para renovar a mano: `sudo systemctl start culinaryos-renew-tls.service` y revisar `journalctl -u culinaryos-renew-tls.service`.
+
+### Rotación de la CA, año 9
+
+El journal avisa cada día desde 365 días antes del vencimiento. Cada terminal fija la huella de una sola CA, así que rotar requiere pasar por todas:
+
+1. Hacer copia de `/etc/culinaryos` y del kit de recuperación.
+2. En una ventana con la sucursal cerrada, generar una CA nueva y un certificado de servidor firmado por ella, con el mismo nombre y dirección, usando los mismos parámetros que `certificates()` en `install.py`.
+3. Reemplazar `restaurant-ca.crt`, `secrets/restaurant-ca.key` y `restaurant-tls.crt`, y actualizar `CaSha256` en `restaurant-connection.json`.
+4. Reiniciar `culinaryos-backend.service`.
+5. En cada terminal, abrir **Conexión** y cargar la CA nueva con su huella SHA-256. Hasta entonces esa terminal rechaza el servidor, y es el comportamiento correcto.
+6. Generar un kit de recuperación nuevo y destruir la llave de la CA anterior.
+
 ## Separación de materiales
 
 - Estación administrativa offline: CA por sitio, clave cifrada, base de emisión, seriales y CRL.

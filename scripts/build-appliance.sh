@@ -13,6 +13,7 @@ cache_source=${2:-}
 [[ -f $application/payload/client/culinary-restaurant && -f $application/payload/backend/MesaNexo.Api ]] || exit 2
 python3 "$project/tests/test_project.py"
 python3 "$project/tests/test_appliance.py"
+python3 "$project/tests/test_recovery.py"
 for tool in lb debootstrap xorriso mksquashfs openssl; do command -v "$tool" >/dev/null; done
 command -v rsvg-convert >/dev/null || { echo 'Falta rsvg-convert; instala librsvg2-bin en el constructor.' >&2; exit 2; }
 work="$project/build/appliance-$(date -u +%Y%m%dT%H%M%SZ)-$$"
@@ -88,21 +89,11 @@ cp -a "$application/payload/backend" config/includes.chroot/opt/culinaryos-app/b
 cp -a "$application/payload/client" config/includes.chroot/opt/culinaryos-app/client
 cp -a "$application/deploy/culinaryos/kiosk" config/includes.chroot/opt/culinaryos-app/kiosk
 cp "$application/deploy/culinaryos/CulinaryRestaurant" config/includes.chroot/opt/culinaryos-app/client/CulinaryRestaurant
+cp "$application/deploy/culinaryos/hardware-identity.py" "$application/deploy/culinaryos/renew-tls.py" "$application/deploy/culinaryos/license-server.txt" config/includes.chroot/opt/culinaryos-app/
 cp "$application/deploy/culinaryos/install.py" config/includes.chroot/usr/local/lib/culinaryos/appliance_install.py
-cp "$application/runtime/mesanexo_ipc.py" config/includes.chroot/usr/local/lib/culinaryos/mesanexo_ipc.py
 mkdir -p config/includes.chroot/usr/share/xsessions config/includes.chroot/usr/share/icons/hicolor/256x256/apps
 cp "$application/deploy/culinaryos/kiosk/culinary-restaurant.desktop" config/includes.chroot/usr/share/xsessions/
 cp "$application/branding/icon-256.png" config/includes.chroot/usr/share/icons/hicolor/256x256/apps/culinary-restaurant.png
-# Hook the extension using exact LF bytes, before any store or account exists.
-python3 - config/includes.chroot/usr/local/lib/culinaryos/dataio.py <<'PYCODE'
-from pathlib import Path
-import sys
-p=Path(sys.argv[1]);data=p.read_bytes();anchor=b'if __name__=="__main__":main()'
-assert data.count(anchor)==1
-hook=b'import mesanexo_ipc\nmesanexo_ipc.install(sys.modules[__name__])\n'
-p.write_bytes(data.replace(anchor,hook+anchor))
-compile(p.read_bytes(),str(p),'exec')
-PYCODE
 cp "$project/os/hooks/0100-culinaryos.hook.chroot" config/hooks/live/
 cp "$project/os/hooks/0200-appliance.hook.chroot" config/hooks/live/
 chown -R root:root config/includes.chroot

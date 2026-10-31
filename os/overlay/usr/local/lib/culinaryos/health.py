@@ -27,6 +27,8 @@ CHECKS = {
     "PACKAGES": ("Actualizaciones", "Hay paquetes con actualizaciones disponibles.", "El administrador debe revisar e instalar durante mantenimiento."),
     "REBOOT": ("Actualizaciones", "Hay un reinicio pendiente.", "Programe el reinicio al terminar el uso del equipo."),
     "CERTIFICATES": ("Certificados", "Un certificado configurado está vencido o vence en siete días.", "Solicite renovarlo y verificar su servicio."),
+    "SMART": ("Disco", "El disco anuncia una falla.", "Copia los datos y cambia el disco cuanto antes; el kit de recuperación y la copia externa permiten pasar a otro equipo."),
+    "TEMPERATURE": ("Temperatura", "El servidor está demasiado caliente.", "Revisa ventilación, polvo y que el equipo no esté encerrado."),
     "BACKUP": ("Respaldos", "No existe una copia verificada reciente o falló el último respaldo.", "Conecte el destino protegido y solicite revisar las copias."),
     "MAINTENANCE": ("Mantenimiento", "Un componente requiere revisión administrativa.", "Acceda con la cuenta administradora para consultar el registro."),
 }
@@ -62,6 +64,12 @@ def evaluate(e):
         "critico" if free is not None and free < .05 else "aviso")
     v = e.get("root_readonly"); add("READONLY", v, v is True, "critico")
     v = e.get("permissions"); add("PERMISSIONS", v, v is False, "critico")
+    v = e.get("smart_passed")
+    if v is None: optional("SMART", "Este equipo no informa el estado SMART de su disco.")
+    else: add("SMART", v, v is False, "critico")
+    v = e.get("temperature")
+    if v is None: optional("TEMPERATURE", "Este equipo no informa su temperatura.")
+    else: add("TEMPERATURE", v, v >= 85, "critico" if v >= 95 else "aviso")
     v = e.get("mem_available_ratio"); add("MEMORY", v, v is not None and v < .10)
     v = e.get("memory_pressure"); add("PRESSURE", v, v is not None and v > 10)
     v = e.get("load_per_cpu"); add("LOAD", v, v is not None and v > 2)
@@ -91,8 +99,42 @@ def read_json(path, default):
     except (OSError, ValueError):
         return default
 
+def disk_health():
+    """False si algún disco anuncia una falla; None si ninguno informa, como en una VM."""
+    raw = run(["lsblk","-dnpo","NAME,TYPE"])
+    if raw is None:
+        return None
+    result = None
+    for line in raw.splitlines():
+        parts = line.split()
+        if len(parts) != 2 or parts[1] != "disk":
+            continue
+        try:
+            # smartctl sale con error justo cuando el disco falla: el estado se lee del JSON, no del código.
+            p = subprocess.run(["smartctl","-H","-j",parts[0]],capture_output=True,text=True,timeout=10,check=False)
+            passed = json.loads(p.stdout).get("smart_status",{}).get("passed")
+        except (OSError, ValueError, subprocess.TimeoutExpired):
+            continue
+        if passed is False:
+            return False
+        if passed is True:
+            result = True
+    return result
+
+def temperature():
+    """Grados de la lectura más alta del equipo, o None si no informa ninguna."""
+    values = []
+    for path in (*Path("/sys/class/hwmon").glob("hwmon*/temp*_input"), *Path("/sys/class/thermal").glob("thermal_zone*/temp")):
+        try:
+            values.append(int(path.read_text().strip())/1000)
+        except (OSError, ValueError):
+            pass
+    return max(values) if values else None
+
 def collect():
     e = {}
+    e["smart_passed"] = disk_health()
+    e["temperature"] = temperature()
     cfg = read_json("/etc/culinaryos/health.json", {})
     failed = run(["systemctl","--failed","--no-legend","--plain","--no-pager"])
     e["failed_services"] = len(failed.strip().splitlines()) if failed is not None else None

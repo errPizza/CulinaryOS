@@ -138,6 +138,60 @@ class ApplianceTests(unittest.TestCase):
             if '.service.d' in str(path):
                 self.assertNotIn('\nAfter=\n','\n'+path.read_text(encoding='utf-8'),'empty After= does not reset dependencies: '+str(path))
 
+    def test_image_has_no_sqlite_extension_or_second_outbox_sender(self):
+        for name in ('build-appliance.sh','prepare-appliance-input.py'):
+            self.assertNotIn('mesanexo_ipc',(ROOT/'scripts'/name).read_text(encoding='utf-8'))
+        hook=(ROOT/'os/hooks/0200-appliance.hook.chroot').read_text(encoding='utf-8')
+        self.assertLess(hook.index('rm -f /etc/systemd/system/culinaryos-sync.timer'),hook.index('systemctl mask culinaryos-sync.timer culinaryos-sync.service'),'mask refuses a real unit file')
+        self.assertIn('Second outbox sender',(ROOT/'scripts/audit-appliance.py').read_text(encoding='utf-8'))
+
+    def test_masked_sync_timer_is_left_alone_and_any_other_state_is_managed(self):
+        import provision
+        for state,calls in (('masked',1),('enabled',2),('disabled',2)):
+            with patch.object(provision.subprocess,'run',return_value=types.SimpleNamespace(stdout=state+'\n')) as run:
+                provision.sync_timer('enable','--now')
+            self.assertEqual(run.call_count,calls,state)
+            if calls==2:self.assertEqual(run.call_args.args[0],['systemctl','enable','--now','culinaryos-sync.timer'])
+
+    def test_backend_declares_central_credentials_only_when_all_three_exist(self):
+        import provision,deployment
+        with tempfile.TemporaryDirectory() as tmp:
+            secrets=Path(tmp)/'secrets';secrets.mkdir()
+            names=('central-ca.crt','central-client.crt','central-client.key')
+            for name in names[:2]:(secrets/name).write_text('x')
+            with patch.object(provision,'SECRETS',secrets),patch.object(deployment,'write_file') as write:
+                provision.central_credentials()
+                self.assertFalse(write.called,'a missing file would stop the backend from starting')
+                (secrets/names[2]).write_text('x')
+                provision.central_credentials()
+            target,data=write.call_args.args
+            self.assertEqual(Path(target).name,'central.conf')
+            self.assertEqual(Path(target).parent.name,'culinaryos-backend.service.d')
+            text=data.decode()
+            self.assertTrue(text.startswith('[Service]\n'))
+            for key,name in zip(('central-ca','central-cert','central-key'),names):
+                self.assertIn('LoadCredential='+key+':'+str(secrets/name)+'\n',text)
+
+    def test_configuring_central_gives_the_backend_its_credentials_and_restarts_it(self):
+        import provision,deployment,syncworker
+        with tempfile.TemporaryDirectory() as tmp:
+            base=Path(tmp)
+            def mapped(value):
+                p=Path(value)
+                return base/p.as_posix().lstrip('/') if str(value).replace('\\','/').startswith('/') and not p.is_relative_to(base) else p
+            def write(path,data,mode=0o644):
+                p=mapped(path);p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(data if isinstance(data,bytes) else json.dumps(data).encode())
+            cfg={}
+            for key in ('ca_file','client_certificate','client_key'):
+                cfg[key]=str(base/key);(base/key).write_text('pem')
+            (base/'central.json').write_text(json.dumps(cfg))
+            write('/etc/culinaryos/branch.json',{'site_id':'site-fresh','central':None})
+            with patch.object(provision,'admin'),patch.object(provision,'secure_file',side_effect=lambda path,secret=False:Path(path)),patch.object(provision,'Path',side_effect=mapped),patch.object(provision,'SECRETS',base/'secrets'),patch.object(provision,'atomic',side_effect=write),patch.object(deployment,'write_file',side_effect=write),patch.object(syncworker,'HTTPSCentral'),patch.object(provision,'sync_timer'),patch.object(provision.subprocess,'run') as calls:
+                provision.configure_central(base/'central.json')
+            self.assertIn('central-key',mapped('/etc/systemd/system/culinaryos-backend.service.d/central.conf').read_text())
+            commands=[call.args[0] for call in calls.call_args_list]
+            self.assertLess(commands.index(['systemctl','daemon-reload']),commands.index(['systemctl','try-restart','culinaryos-backend.service']))
+
     def test_local_registration_keeps_real_tls_checks_without_lan_port_or_announcement(self):
         import provision,apphost,lan,deployment
         with tempfile.TemporaryDirectory() as tmp:

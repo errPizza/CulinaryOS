@@ -32,6 +32,28 @@ class DiagnosticsTests(unittest.TestCase):
             with self.subTest(code=code):
                 e=baseline();e[key]=value
                 self.assertEqual(row(e,code)["gravedad"],"critico")
+    def test_a_failing_disk_is_critical(self):
+        e=baseline();e["smart_passed"]=False
+        self.assertEqual(row(e,"SMART")["gravedad"],"critico")
+        e["smart_passed"]=True
+        self.assertEqual(row(e,"SMART")["gravedad"],"correcto")
+    def test_temperature_levels(self):
+        for degrees,expected in [(70,"correcto"),(85,"aviso"),(96,"critico")]:
+            e=baseline();e["temperature"]=degrees
+            self.assertEqual(row(e,"TEMPERATURE")["gravedad"],expected)
+    def test_a_machine_without_sensors_is_not_an_alarm(self):
+        for code in ("SMART","TEMPERATURE"):self.assertEqual(row(baseline(),code)["gravedad"],"no_aplica")
+    def test_smartctl_reports_failure_through_an_error_exit(self):
+        replies=[subprocess.CompletedProcess([],0,"/dev/sda disk\n/dev/sr0 rom\n/dev/sdb disk\n",""),
+                 subprocess.CompletedProcess([],0,'{"smart_status":{"passed":true}}',""),
+                 subprocess.CompletedProcess([],8,'{"smart_status":{"passed":false}}',"")]
+        with patch("health.subprocess.run",side_effect=replies) as run:
+            self.assertIs(health.disk_health(),False)
+        self.assertEqual(run.call_count,3)
+    def test_no_smart_answer_is_unknown(self):
+        replies=[subprocess.CompletedProcess([],0,"/dev/vda disk\n",""),subprocess.CompletedProcess([],1,'{}',"")]
+        with patch("health.subprocess.run",side_effect=replies):
+            self.assertIsNone(health.disk_health())
     def test_failed_services(self):
         e=baseline();e["failed_services"]=2
         self.assertEqual(row(e,"SERVICES")["gravedad"],"aviso")

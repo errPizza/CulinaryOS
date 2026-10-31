@@ -8,6 +8,11 @@ from pathlib import Path
 import re
 import uuid
 
+# Authenticated internet time (NTS): licences reject a clock set back, so the LAN must not be able to fake it.
+# Certificate dates are not checked while unsynchronised, otherwise a clock far behind could never recover.
+INTERNET_TIME=("server time.cloudflare.com iburst nts\nserver nts.netnod.se iburst nts\n"
+               "nocerttimecheck 1\nntsdumpdir /var/lib/chrony\n")
+
 def hostname(value):
     if not isinstance(value,str) or len(value)>253 or not all(re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?",x) for x in value.split(".")):
         raise ValueError("Nombre DNS no válido")
@@ -127,14 +132,14 @@ table inet culinaryos {
           "gateway":gateway,"mdns_name":plan.get("mdns_name","servidor-restaurante")+".local",
           "medium":medium,"ssid":ssid,"internet_probes":plan.get("internet_probes",[]),
           "application":None}
-    chrony="driftfile /var/lib/chrony/chrony.drift\nrtcsync\nmakestep 1.0 3\ncmdport 0\n"
+    chrony="driftfile /var/lib/chrony/chrony.drift\nrtcsync\nmakestep 1.0 -1\ncmdport 0\n"
     if plan["local_time"]:
         if node["role"]=="servidor":
-            chrony+=f"local stratum 10\nallow {net}\n"
+            chrony+=INTERNET_TIME+f"local stratum 10\nallow {net}\n"
         else:
             chrony+=f"server {server['address']} iburst maxpoll 6\n"
     else:
-        chrony+="port 0\n"
+        chrony+=INTERNET_TIME+"port 0\n"
     mdns_host=plan.get("mdns_name","servidor-restaurante") if node["role"]=="servidor" else node_name
     avahi=f"[server]\nhost-name={mdns_host}\ndomain-name=local\nallow-interfaces={interface}\nuse-ipv4=yes\nuse-ipv6=yes\nallow-point-to-point=no\nratelimit-interval-usec=1000000\nratelimit-burst=20\n\n[wide-area]\nenable-wide-area=no\n\n[publish]\ndisable-publishing={'no' if node['role']=='servidor' else 'yes'}\ndisable-user-service-publishing={'no' if node['role']=='servidor' else 'yes'}\npublish-hinfo=no\npublish-workstation=no\npublish-domain=no\n\n[reflector]\nenable-reflector=no\n"
     return {"connection.nmconnection":connection,"avahi-daemon.conf":avahi,

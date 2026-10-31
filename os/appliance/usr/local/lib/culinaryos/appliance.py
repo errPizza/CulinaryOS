@@ -147,15 +147,19 @@ def main():
         except (OSError,ValueError):pass
         time.sleep(.25)
     else:raise RuntimeError('El almacen no quedo disponible; conservar las claves y revisar el servicio')
+    # The backend keeps the branch in PostgreSQL: its role and database exist before registration starts it.
+    run('systemctl','start','postgresql.service')
+    installer.postgres_database()
     ca,cert,key=installer.certificates(site)
     installer.write_new(BASE/'restaurant-connection.json',(json.dumps(installer.connection(site,ca),indent=2)+'\n').encode())
+    installer.tls_renewal()
     # The restaurant and its manager are created in the app's Setup mode, not on this console.
     setup_code=prepare_setup(operator)
     if not (BASE/'application.registered').exists():
         manifest={'version':1,'mode':'server','ui_argv':[str(APP/'client/CulinaryRestaurant')],
-                  'backend_argv':[str(APP/'backend/MesaNexo.Api'),'--site',site['site_id'],'--port','8443'],
+                  'backend_argv':[str(APP/'backend/MesaNexo.Api'),'--site',site['site_id'],'--port','8443','--license-server',(APP/'license-server.txt').read_text(encoding='ascii').strip()],
                   'port':8443,'readiness_socket':'/run/culinaryos-app/ready.sock','tls_ca_file':str(ca),
-                  'credentials':{'tls-key':str(key),'tls-cert':str(cert),'setup-code':str(setup_code)}}
+                  'credentials':{'tls-key':str(key),'tls-cert':str(cert),'setup-code':str(setup_code),'keyring':str(installer.KEYRING)}}
         installer.write_new(APP/'application.json',(json.dumps(manifest,indent=2)+'\n').encode())
         register(APP/'application.json')
     write(STATE/'provisioned','1\n',0o600)
