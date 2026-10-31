@@ -48,7 +48,7 @@ La copia queda en `/var/lib/culinaryos-app/snapshots`. Hoy no hay temporizador n
    ```
 
 4. En CulinaryAdmin, **Liberar equipo** en la licencia de la sucursal, con el motivo. Si el equipo anterior sigue encendido, se bloquea en su siguiente contacto. El panel entrega un código de activación nuevo.
-5. Activar la licencia en el equipo nuevo con ese código. Hasta entonces la app muestra la pantalla de activación. La transferencia con aprobación y auditoría propias es el hallazgo 7.
+5. Activar la licencia en el equipo nuevo con ese código. Hasta entonces la app muestra la pantalla de activación.
 6. Si el sitio no es `local_only`, reaplicar la red y el firewall del plan de sitio. El comando sólo actualiza `/etc/hosts`.
 
 ### Qué hace el comando
@@ -57,6 +57,8 @@ La copia queda en `/var/lib/culinaryos-app/snapshots`. Hoy no hay temporizador n
 2. Carga la copia en la base temporal `culinaryos_restore`.
 3. Ejecuta `MesaNexo.Api --verify-store` con el llavero del kit. Comprueba que se abran todos los registros y eventos, la cadena de auditoría y que `events + events_archive` cuadre con las transacciones.
 4. Si algo falla, borra la base temporal y el equipo queda igual.
+
+Si la sucursal publica puntos de control, el comando deja constancia en el bucket de que se restauró, porque lo publicado después de la copia ya no coincide. Sin red, la app muestra la alerta de bitácora y detiene las autorizaciones. Al volver la red, repetirlo con `MesaNexo.Api --site SITIO --accept-checkpoints "Restauración del DÍA"` como `culinaryos-app`, con el llavero en `CREDENTIALS_DIRECTORY`, y reiniciar el backend.
 5. Si pasa, guarda la configuración actual en `/var/backups/culinaryos/pre-restore-*`, detiene los servicios, instala los archivos, cambia `--site` en `application.json` y reemplaza la base.
 6. Si falla al instalar, vuelve a poner los archivos anteriores.
 

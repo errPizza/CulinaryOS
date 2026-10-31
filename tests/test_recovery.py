@@ -100,6 +100,12 @@ class RestoreTests(unittest.TestCase):
         self.assertEqual(order,sorted(order))
         args=' '.join(self.installer.app_command.call_args.args)
         for expected in ('--verify-store','--site site-a','Database=culinaryos_restore'):self.assertIn(expected,args)
+    def test_a_restore_declares_itself_to_the_checkpoints_before_the_backend_starts(self):
+        (self.base/'integrations').mkdir(exist_ok=True)
+        (self.base/'integrations/checkpoints.json').write_text('{}')
+        self.installer.app_command.side_effect=lambda *a,**k:(self.calls.append('accept') if '--accept-checkpoints' in a else None) or types.SimpleNamespace(returncode=0,stdout=b'{"valid":true}')
+        recovery.restore(self.kit,self.dump)
+        self.assertLess(self.calls.index('accept'),next(i for i,c in enumerate(self.calls) if 'systemctl start' in c))
     def test_failed_verification_leaves_the_machine_untouched(self):
         self.installer.app_command.return_value=types.SimpleNamespace(returncode=4,stdout=b'{"valid":false}')
         with self.assertRaises(ValueError):recovery.restore(self.kit,self.dump)

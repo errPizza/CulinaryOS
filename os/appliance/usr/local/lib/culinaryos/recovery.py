@@ -188,6 +188,11 @@ def restore(kit_file,dump):
         subprocess.run(['systemctl','start','culinaryos-data.service','culinaryos-backend.service'],check=False)
         raise
     subprocess.run(['systemctl','daemon-reload'],check=True)
+    # La copia es anterior a lo último publicado, así que esos puntos de control ya no coinciden. Declararlo aquí evita una
+    # alerta falsa al arrancar; sin red, la app avisa y se repite a mano.
+    if (CONFIG/'integrations/checkpoints.json').exists():
+        reply=installer.app_command('--site',site,'--accept-checkpoints','Restauración con culinaryos-restore')
+        if reply.returncode:print('No se registró la restauración en los puntos de control; ver SIMULACRO-RESTAURACION.md',file=sys.stderr)
     subprocess.run(['systemctl','start','culinaryos-data.service','culinaryos-backend.service'],check=True)
     if not json.loads(decode(files['site.json']['data'])).get('local_only'):subprocess.run(['systemctl','start','culinaryos-publish.service'],check=True)
     print(json.dumps(report,ensure_ascii=False))
