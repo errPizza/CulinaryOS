@@ -2,8 +2,8 @@
 from pathlib import Path
 import argparse,hashlib,json,shutil,tarfile
 ROOT=Path(__file__).resolve().parents[1]
-APP=ROOT.parent/'MesaNexoNativo'
-parser=argparse.ArgumentParser();parser.add_argument('--revision',type=int,required=True);parser.add_argument('--license-server',required=True);args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--revision',type=int,required=True);parser.add_argument('--license-server',required=True);parser.add_argument('--application',type=Path,default=ROOT.parent/'MesaNexoNativo',help='MesaNexoNativo checkout to package; a worktree for a branch not yet merged');args=parser.parse_args()
+APP=args.application.resolve()
 if not 1<=args.revision<=99:raise SystemExit('Invalid revision')
 if not args.license_server.startswith('https://'):raise SystemExit('--license-server must be HTTPS')
 stage=ROOT/f'build/appliance-input-r{args.revision}'
