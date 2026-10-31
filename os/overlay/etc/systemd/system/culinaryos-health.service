@@ -17,7 +17,8 @@ RuntimeDirectoryPreserve=yes
 ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes
-PrivateDevices=yes
+# smartctl lee los discos directamente.
+PrivateDevices=no
 NoNewPrivileges=yes
 ProtectKernelTunables=yes
 ProtectKernelModules=yes

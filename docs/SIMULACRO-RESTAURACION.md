@@ -35,7 +35,25 @@ Tomar una copia de la base y sacarla del equipo, junto con su `.sha256`:
 sudo systemctl start culinaryos-snapshot.service
 ```
 
-La copia queda en `/var/lib/culinaryos-app/snapshots`. Hoy no hay temporizador ni envío externo: el RPO es el tiempo desde la última copia que se sacó a mano. El RPO de 15 minutos depende de la copia externa a Cloudflare R2 del hallazgo 9.
+La copia queda en `/var/lib/culinaryos-app/snapshots`.
+
+Con `/etc/culinaryos/integrations/backups.json`, el backend envía una copia a R2 cada 15 minutos si hubo cambios, con su `.sha256`. Sin ese archivo, el RPO es el tiempo desde la última copia que se sacó a mano. Las filas van selladas con el llavero: en el bucket sólo se ven identificadores, tamaños y horas. Por eso la copia sola no sirve de nada sin el kit.
+
+## Sustituir un servidor dañado
+
+Necesitas el kit, su contraseña y la cuenta de R2. El tiempo objetivo para volver a vender es de 4 horas.
+
+1. Instalar la ISO en el equipo nuevo y dejarlo en la red de la sucursal.
+2. Descargar en un USB la copia más reciente de `SITIO/backups/`, con su `.sha256`:
+
+   ```bash
+   npx wrangler r2 object get culinary-copias-SITIO/SITIO/backups/ARCHIVO.dump --file ARCHIVO.dump --remote
+   npx wrangler r2 object get culinary-copias-SITIO/SITIO/backups/ARCHIVO.dump.sha256 --file ARCHIVO.dump.sha256 --remote
+   ```
+
+3. Seguir **Restaurar**, con ese archivo como `--dump`.
+4. Comprobar en la app ventas, caja e inventario, y hacer una venta de prueba.
+5. Crear un kit nuevo si cambiaron certificados o llavero.
 
 ## Restaurar
 
