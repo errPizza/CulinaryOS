@@ -5,6 +5,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"os/overlay/usr/local/
 import unittest
 from unittest.mock import patch
 import subprocess
+import os
 import health
 
 def baseline():
@@ -24,9 +25,42 @@ class DiagnosticsTests(unittest.TestCase):
         self.assertEqual(row(e,"NETWORK")["gravedad"],"aviso")
         self.assertFalse(any(x["gravedad"]=="critico" for x in health.evaluate(e)))
     def test_low_disk_levels(self):
-        for free,expected in [(.14,"aviso"),(.04,"critico"),(.15,"correcto")]:
-            e=baseline();e["disk_free_ratio"]=free
-            self.assertEqual(row(e,"DISK")["gravedad"],expected)
+        for used,expected,text in [(.59,"correcto",""),(.60,"aviso","preventivo"),(.75,"aviso","capacidad"),(.85,"critico","crítico"),(.95,"critico","contingencia")]:
+            with self.subTest(used=used):
+                e=baseline();e["disk_free_ratio"]=round(1-used,4)
+                self.assertEqual(row(e,"DISK")["gravedad"],expected)
+                self.assertIn(text,row(e,"DISK")["mensaje"])
+        e=baseline();e["disk_free_ratio"]=.04
+        self.assertIn("--release-reserve",row(e,"DISK")["mensaje"])
+        self.assertNotIn("pendientes",row(e,"DISK")["mensaje"].replace("ni eventos pendientes",""))
+    def test_disk_projection(self):
+        e=baseline();e.update(disk_free_ratio=.5,disk_days_to_full=10)
+        self.assertEqual(row(e,"DISK")["gravedad"],"aviso")
+        self.assertIn("10 días",row(e,"DISK")["mensaje"])
+        e["disk_days_to_full"]=2
+        self.assertEqual(row(e,"DISK")["gravedad"],"critico")
+        e["disk_days_to_full"]=30
+        self.assertEqual(row(e,"DISK")["gravedad"],"correcto")
+    def test_disk_trend(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            trend=Path(d)/"trend.json"; total=100*2**30; now=1_000_000
+            self.assertIsNone(health.disk_trend(40*2**30,total,now,trend))
+            self.assertIsNone(health.disk_trend(41*2**30,total,now+3*3600,trend))
+            days=health.disk_trend(42*2**30,total,now+12*3600,trend)
+            self.assertAlmostEqual(days,(95-42)/4,places=3)
+            self.assertIsNone(health.disk_trend(30*2**30,total,now+13*3600,trend))
+    def test_reserve_is_created_and_only_released_by_hand(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            reserve=Path(d)/"reserve"
+            with patch.object(health.os,"posix_fallocate",create=True,new=lambda fd,o,n:os.ftruncate(fd,n)):
+                self.assertEqual(health.ensure_reserve(10*2**30,.5,reserve),int(10*2**30*.02))
+                self.assertEqual(health.ensure_reserve(10*2**30,.97,reserve),int(10*2**30*.02))
+                self.assertTrue(reserve.exists())
+                self.assertEqual(health.release_reserve(reserve),int(10*2**30*.02))
+                self.assertEqual(health.ensure_reserve(10*2**30,.9,reserve),0)
+                self.assertFalse(reserve.exists())
     def test_critical_indicators(self):
         for code,key,value in [("READONLY","root_readonly",True),("PERMISSIONS","permissions",False),("FIREWALL","firewall",False)]:
             with self.subTest(code=code):

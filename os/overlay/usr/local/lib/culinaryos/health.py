@@ -59,9 +59,7 @@ def evaluate(e):
         add("DNS", e.get("dns"), e.get("dns") is False)
     else:
         optional("DNS", "No hay dependencia DNS declarada; internet no es requisito de arranque.")
-    free = e.get("disk_free_ratio")
-    add("DISK", free, free is not None and free < .15,
-        "critico" if free is not None and free < .05 else "aviso")
+    disk(e, add)
     v = e.get("root_readonly"); add("READONLY", v, v is True, "critico")
     v = e.get("permissions"); add("PERMISSIONS", v, v is False, "critico")
     v = e.get("smart_passed")
@@ -92,6 +90,69 @@ def evaluate(e):
         optional("BACKUP", "Respaldo externo todavía no configurado; no hay protección por copias confirmada.")
     v = e.get("maintenance"); add("MAINTENANCE", v, v is True)
     return result
+
+# Ocupación del disco: 60 % preventivo, 75 % capacidad, 85 % crítico y 95 % contingencia. Los eventos pendientes de
+# la central nunca se borran para liberar espacio; la reserva es lo único que se puede soltar.
+DISK_LEVELS = ((.95, "critico", "Disco al {pct} %: active la contingencia."),
+               (.85, "critico", "Disco al {pct} %: espacio crítico."),
+               (.75, "aviso", "Disco al {pct} %: capacidad por agotarse."),
+               (.60, "aviso", "Disco al {pct} %: aviso preventivo."))
+RESERVE = Path("/var/lib/culinaryos/disk-reserve")
+TREND = Path("/var/lib/culinaryos/disk-trend.json")
+
+def disk(e, add):
+    free = e.get("disk_free_ratio")
+    if free is None:
+        add("DISK", None); return
+    used = 1 - free
+    days = e.get("disk_days_to_full")
+    level = next((x for x in DISK_LEVELS if used >= x[0]), None)
+    severity = level[1] if level else "aviso" if days is not None and days < 14 else None
+    if days is not None and days < 3: severity = "critico"
+    if severity is None:
+        add("DISK", free); return
+    detail = (level[2] if level else "Disco al {pct} %.").format(pct=int(used*100))
+    if days is not None: detail += f" Al ritmo actual llega al 95 % en {max(days,0):.0f} días."
+    action = "Solicite liberar espacio sin borrar datos operativos ni eventos pendientes."
+    if used >= .95:
+        action = "Libere la reserva con «health.py --release-reserve», no borre datos ni eventos pendientes y llame a soporte para ampliar el disco o cambiar de equipo."
+    add("DISK", free, True, severity, detail=detail + " " + action)
+
+def disk_trend(used, total, now, path=TREND):
+    """Días hasta el 95 % según el crecimiento de la última semana, o None sin seis horas de muestras."""
+    samples = [s for s in read_json(path, []) if isinstance(s, list) and len(s) == 2 and now - s[0] <= 7*86400]
+    if not samples or now - samples[-1][0] >= 1800:
+        samples.append([now, used])
+        try:
+            path.write_text(json.dumps(samples), encoding="utf-8")
+        except OSError:
+            pass
+    first = samples[0]
+    if now - first[0] < 6*3600 or used <= first[1]:
+        return None
+    rate = (used - first[1]) / ((now - first[0]) / 86400)
+    return (.95*total - used) / rate
+
+def ensure_reserve(total, used_ratio, path=RESERVE):
+    """Crea la reserva (2 % del disco, hasta 1 GiB) mientras haya espacio; nunca la borra sola."""
+    size = min(1 << 30, int(total * .02))
+    if path.exists() or used_ratio >= .85:
+        return path.stat().st_size if path.exists() else 0
+    try:
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        try:
+            os.posix_fallocate(fd, 0, size)
+        finally:
+            os.close(fd)
+        return size
+    except (OSError, AttributeError):
+        path.unlink(missing_ok=True)
+        return 0
+
+def release_reserve(path=RESERVE):
+    size = path.stat().st_size if path.exists() else 0
+    path.unlink(missing_ok=True)
+    return size
 
 def read_json(path, default):
     try:
@@ -156,6 +217,8 @@ def collect():
         e["dns"] = run(["getent","ahosts",host]) is not None
     disk = shutil.disk_usage("/")
     e["disk_free_ratio"] = disk.free / disk.total
+    e["disk_reserve_bytes"] = ensure_reserve(disk.total, 1 - disk.free / disk.total)
+    e["disk_days_to_full"] = disk_trend(disk.total - disk.free, disk.total, time.time())
     # Leer el namespace de PID 1 evita confundir ProtectSystem=strict con raíz física RO.
     try:
         mounts = Path("/proc/1/mounts").read_text().splitlines()
@@ -209,6 +272,10 @@ def collect():
     return e
 
 def main():
+    import sys
+    if "--release-reserve" in sys.argv[1:]:
+        print(f"Reserva liberada: {release_reserve()//(1<<20)} MiB. Ningún dato ni evento pendiente se borró.")
+        return 0
     start=time.monotonic()
     checks=evaluate(collect())
     import lan
