@@ -14,14 +14,16 @@ Para renovar a mano: `sudo systemctl start culinaryos-renew-tls.service` y revis
 
 ### Rotación de la CA, año 9
 
-El journal avisa cada día desde 365 días antes del vencimiento. Cada terminal fija la huella de una sola CA, así que rotar requiere pasar por todas:
+El journal avisa cada día desde 365 días antes del vencimiento. La rotación no detiene a las terminales: durante un tiempo confían en las dos CA. La hace `rotate-ca.py` (en la carpeta de la aplicación, junto a `renew-tls.py`), en tres pasos que corre un administrador. Cada paso queda en `/var/lib/culinaryos/ca-rotation.json`.
 
 1. Hacer copia de `/etc/culinaryos` y del kit de recuperación.
-2. En una ventana con la sucursal cerrada, generar una CA nueva y un certificado de servidor firmado por ella, con el mismo nombre y dirección, usando los mismos parámetros que `certificates()` en `install.py`.
-3. Reemplazar `restaurant-ca.crt`, `secrets/restaurant-ca.key` y `restaurant-tls.crt`, y actualizar `CaSha256` en `restaurant-connection.json`.
-4. Reiniciar `culinaryos-backend.service`.
-5. En cada terminal, abrir **Conexión** y cargar la CA nueva con su huella SHA-256. Hasta entonces esa terminal rechaza el servidor, y es el comportamiento correcto.
-6. Generar un kit de recuperación nuevo y destruir la llave de la CA anterior.
+2. `rotate-ca.py announce`: crea la CA nueva y publica las dos en `restaurant-ca-bundle.pem`. El servidor sigue con su certificado de la CA anterior. Cada terminal la aprende de `api/trust` la siguiente vez que alguien entra, por la conexión que ya valida, y guarda las dos huellas. Sólo adopta un conjunto que conserve al menos una CA que ya conoce.
+3. Esperar a que todas las terminales hayan entrado al menos una vez.
+4. `rotate-ca.py switch`: emite el certificado del servidor con la CA nueva, con la misma llave, y reinicia el backend. La CA anterior sigue publicada. Si algo falla, los archivos vuelven a su lugar.
+5. `rotate-ca.py retire`, no antes de 30 días después del cambio: publica sólo la CA nueva y destruye la llave de la anterior. Antes de ese plazo exige `--force`.
+6. Generar un kit de recuperación nuevo.
+
+Una terminal apagada durante toda la ventana rechaza el servidor después del cambio. Es lo correcto: se vuelve a aprovisionar desde **Conexión** con la CA nueva y su huella, como una terminal nueva. La renovación diaria sigue funcionando en cualquier paso, porque siempre usa la CA que está en `restaurant-ca.crt`.
 
 ## Separación de materiales
 
