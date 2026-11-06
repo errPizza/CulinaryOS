@@ -200,18 +200,39 @@ def restore(kit_file,dump):
     print('Licencia pendiente: el proveedor restablece la activación y aquí se activa con el código nuevo.')
 
 
+def reset_password(username):
+    """Sin ningún gerente que pueda entrar. La contraseña va por una tubería: nunca como argumento ni en disco."""
+    from provision import admin
+    import appliance_install as installer
+    admin()
+    site=json.loads((CONFIG/'site.json').read_text())['site_id']
+    password=getpass.getpass('Contraseña nueva de '+username+': ')
+    if password!=getpass.getpass('Repítela: '):raise ValueError('Las contraseñas no coinciden')
+    reader,writer=os.pipe()
+    os.write(writer,password.encode()+b'\n')
+    os.close(writer)
+    try:reply=installer.app_command('--site',site,'--reset-password',username,stdin=reader)
+    finally:os.close(reader)
+    if reply.returncode!=0:raise ValueError('La contraseña no cambió')
+    result=json.loads(reply.stdout)
+    print('Contraseña de '+username+' cambiada. Sesiones cerradas: '+str(result['sessionsClosed'])+'. Queda en la bitácora.')
+    if not result['active']:print('Esta cuenta está inactiva: actívala en Equipo y dispositivos.')
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     sub=parser.add_subparsers(dest='command',required=True)
     sub.add_parser('kit').add_argument('output')
     q=sub.add_parser('restore');q.add_argument('--kit',required=True);q.add_argument('--dump',required=True)
+    sub.add_parser('reset-password').add_argument('username')
     args=parser.parse_args()
     try:
         if args.command=='kit':create(args.output)
-        else:restore(args.kit,args.dump)
+        elif args.command=='restore':restore(args.kit,args.dump)
+        else:reset_password(args.username)
     except Exception as error:
         print('No se completó: '+str(error),file=sys.stderr)
-        print('Conserva el kit y la copia. Revisa el error antes de repetir.',file=sys.stderr)
+        if args.command!='reset-password':print('Conserva el kit y la copia. Revisa el error antes de repetir.',file=sys.stderr)
         raise SystemExit(1)
 
 

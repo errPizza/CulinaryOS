@@ -91,6 +91,10 @@ cp -a "$application/deploy/culinaryos/kiosk" config/includes.chroot/opt/culinary
 cp "$application/deploy/culinaryos/CulinaryRestaurant" config/includes.chroot/opt/culinaryos-app/client/CulinaryRestaurant
 cp "$application/deploy/culinaryos/hardware-identity.py" "$application/deploy/culinaryos/renew-tls.py" "$application/deploy/culinaryos/license-server.txt" config/includes.chroot/opt/culinaryos-app/
 cp "$application/deploy/culinaryos/install.py" config/includes.chroot/usr/local/lib/culinaryos/appliance_install.py
+mkdir -p config/includes.chroot/usr/local/lib/culinary-update config/includes.chroot/etc/systemd/system config/includes.chroot/usr/lib/tmpfiles.d
+cp "$application/deploy/culinaryos/update/apply.py" config/includes.chroot/usr/local/lib/culinary-update/
+cp "$application/deploy/culinaryos/update/culinary-update.path" "$application/deploy/culinaryos/update/culinary-update.service" config/includes.chroot/etc/systemd/system/
+cp "$application/deploy/culinaryos/update/culinary-update.tmpfiles" config/includes.chroot/usr/lib/tmpfiles.d/culinary-update.conf
 mkdir -p config/includes.chroot/usr/share/xsessions config/includes.chroot/usr/share/icons/hicolor/256x256/apps
 cp "$application/deploy/culinaryos/kiosk/culinary-restaurant.desktop" config/includes.chroot/usr/share/xsessions/
 cp "$application/branding/icon-256.png" config/includes.chroot/usr/share/icons/hicolor/256x256/apps/culinary-restaurant.png

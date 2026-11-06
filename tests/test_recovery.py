@@ -1,5 +1,5 @@
 """Kit de recuperación y restauración; sin servicios, PostgreSQL ni escrituras fuera de carpetas temporales."""
-import base64,hashlib,json,sys,tempfile,types,unittest
+import base64,hashlib,json,os,sys,tempfile,types,unittest
 from pathlib import Path
 from unittest.mock import MagicMock,patch
 ROOT=Path(__file__).resolve().parents[1]
@@ -106,6 +106,22 @@ class RestoreTests(unittest.TestCase):
         self.installer.app_command.side_effect=lambda *a,**k:(self.calls.append('accept') if '--accept-checkpoints' in a else None) or types.SimpleNamespace(returncode=0,stdout=b'{"valid":true}')
         recovery.restore(self.kit,self.dump)
         self.assertLess(self.calls.index('accept'),next(i for i,c in enumerate(self.calls) if 'systemctl start' in c))
+    def password_reset(self,typed,reply):
+        seen={}
+        def command(*args,stdin=None):
+            seen.update(args=args,text=os.read(stdin,200));return reply
+        self.installer.app_command=MagicMock(side_effect=command)
+        with patch.object(recovery.getpass,'getpass',side_effect=typed):recovery.reset_password('gerencia')
+        return seen
+    def test_password_reset_sends_the_password_by_pipe_never_as_an_argument(self):
+        seen=self.password_reset(['Una-contraseña-larga','Una-contraseña-larga'],types.SimpleNamespace(returncode=0,stdout=b'{"sessionsClosed":2,"active":true}'))
+        self.assertEqual(seen['text'],'Una-contraseña-larga\n'.encode())
+        self.assertEqual(seen['args'],('--site','site-new','--reset-password','gerencia'))
+    def test_password_reset_stops_when_the_passwords_differ(self):
+        with self.assertRaises(ValueError):self.password_reset(['Una-contraseña-larga','Otra-contraseña-larga'],None)
+        self.installer.app_command.assert_not_called()
+    def test_password_reset_reports_a_refused_change(self):
+        with self.assertRaises(ValueError):self.password_reset(['corta','corta'],types.SimpleNamespace(returncode=1,stdout=b''))
     def test_failed_verification_leaves_the_machine_untouched(self):
         self.installer.app_command.return_value=types.SimpleNamespace(returncode=4,stdout=b'{"valid":false}')
         with self.assertRaises(ValueError):recovery.restore(self.kit,self.dump)
@@ -134,7 +150,7 @@ class RestoreTests(unittest.TestCase):
 
 class ProjectTests(unittest.TestCase):
     def test_image_ships_both_commands(self):
-        for name,command in (('culinaryos-recovery-kit','kit'),('culinaryos-restore','restore')):
+        for name,command in (('culinaryos-recovery-kit','kit'),('culinaryos-restore','restore'),('culinaryos-reset-password','reset-password')):
             data=(ROOT/'os/appliance/usr/local/sbin'/name).read_bytes()
             self.assertNotIn(b'\r',data)
             self.assertIn(('recovery.py '+command+' "$@"').encode(),data)

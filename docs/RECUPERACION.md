@@ -43,6 +43,14 @@ Consultar journal persistente del disco; Live sin persistencia puede haber perdi
 
 ## Pérdida total
 
+Si ningún gerente puede entrar, desde la consola de administración:
+
+```bash
+sudo culinaryos-reset-password USUARIO
+```
+
+Pide la contraseña dos veces (de 12 a 200 caracteres), cierra las sesiones de ese usuario y queda en la bitácora como `user.password.reset`. Requiere root y sirve para cualquier usuario. No cambia el PIN ni reactiva una cuenta inactiva.
+
 La imagen integrada se restaura en un equipo recién instalado con `culinaryos-recovery-kit` y `culinaryos-restore`. Ver SIMULACRO-RESTAURACION.md; el simulacro en VM sigue pendiente. Fuera de esa imagen, las copias requieren reinstalar un SO validado, reponer configuraciones revisadas y crear credenciales propias.
 
 Para LUKS, conservar clave de recuperación y copia de encabezado offline en destinos protegidos distintos. Si se pierden todas las claves, los datos no se pueden recuperar.
